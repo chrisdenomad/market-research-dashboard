@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Sparkles, RefreshCw, KeyRound, AlertTriangle,
   Send, MessageSquare, BarChart2,
@@ -37,6 +37,11 @@ export default function AIInsightCard({
 }) {
   const [manualDraft,  setManualDraft]  = useState('')
   const [summaryDraft, setSummaryDraft] = useState(customInstruction || '')
+
+  // Keep summaryDraft in sync if customInstruction changes externally (e.g. loaded from localStorage)
+  useEffect(() => {
+    setSummaryDraft(customInstruction || '')
+  }, [customInstruction])
 
   const isManual  = mode === 'manual'
   const isSummary = mode === 'summary'
@@ -245,7 +250,7 @@ export default function AIInsightCard({
               <>
                 <p className="ai-summary">{summary}</p>
                 <div className="ai-summary-footer">
-                  <button className="ai-btn ai-btn-regenerate" onClick={onRegenerate} title="Regenerate">
+                  <button className="ai-btn ai-btn-regenerate" onClick={handleSummaryGenerate} title="Regenerate">
                     <RefreshCw size={12} /> Regenerate
                   </button>
                   {customInstruction && (

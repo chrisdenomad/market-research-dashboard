@@ -110,10 +110,13 @@ function buildManualPrompt(userPrompt) {
   return userPrompt.trim()
 }
 
-// Mode 2 — structured data + fixed instruction
-function buildSummaryPrompt(data, instruction) {
-  const inst = instruction?.trim() || AUTO_INSTRUCTION
-  return `You are a senior talent market research analyst. Based on the recruitment market research data below, respond to the following instruction:\n\nINSTRUCTION:\n${inst}\n\n${buildDataContext(data)}`
+// Mode 2 — structured data + fixed 7-sentence instruction, with optional custom focus appended
+function buildSummaryPrompt(data, customInstruction) {
+  const focusClause = customInstruction?.trim()
+    ? ` Additionally, pay special attention to: ${customInstruction.trim()}`
+    : ''
+  const instruction = AUTO_INSTRUCTION + focusClause
+  return `You are a senior talent market research analyst. Based on the recruitment market research data below, respond to the following instruction:\n\nINSTRUCTION:\n${instruction}\n\n${buildDataContext(data)}`
 }
 
 async function callGithubModels(key, prompt, signal) {
@@ -127,7 +130,7 @@ async function callGithubModels(key, prompt, signal) {
     body: JSON.stringify({
       model: MODEL,
       messages: [{ role: 'user', content: prompt }],
-          max_tokens: 700,
+      max_tokens: 700,
       temperature: 0.7,
     }),
   })

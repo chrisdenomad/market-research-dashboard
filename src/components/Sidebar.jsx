@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 const navItems = [
   { id: 'kpi',         label: 'Overview' },
   { id: 'market-size', label: 'Market Supply' },
+  { id: 'capacity',    label: 'Market Capacity' },
   { id: 'insights',    label: 'Key Insights' },
   { id: 'benchmark',   label: 'Salary Benchmark' },
   { id: 'methodology', label: 'Search Methodology' },

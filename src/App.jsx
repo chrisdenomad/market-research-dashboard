@@ -37,6 +37,9 @@ import SortableWidget from './components/SortableWidget'
 import WidgetManager, { ALL_WIDGETS } from './components/WidgetManager'
 import './App.css'
 
+// Lightweight label map for the drag overlay ghost
+const WIDGET_LABELS = Object.fromEntries(ALL_WIDGETS.map((w) => [w.id, w.label]))
+
 // ── Default widget order (all visible) ─────────────────────────
 const DEFAULT_WIDGETS = ALL_WIDGETS.map((w) => w.id)
 
@@ -234,7 +237,9 @@ function Dashboard() {
             >
               {activeId ? (
                 <div className="drag-overlay-ghost">
-                  <WidgetContent id={activeId} {...widgetProps} />
+                  <div className="drag-overlay-label">
+                    {WIDGET_LABELS[activeId] || activeId}
+                  </div>
                 </div>
               ) : null}
             </DragOverlay>

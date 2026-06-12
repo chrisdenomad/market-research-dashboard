@@ -924,7 +924,7 @@ html, body, #root {
   cursor: grabbing;
 }
 
-/* Ghost rendered in the DragOverlay (floating card) */
+/* Ghost rendered in the DragOverlay (floating label, not full widget) */
 .drag-overlay-ghost {
   pointer-events: none;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
@@ -932,6 +932,18 @@ html, body, #root {
   overflow: hidden;
   opacity: 0.92;
   border: 2px solid var(--accent);
+}
+
+.drag-overlay-label {
+  padding: 16px 24px;
+  background: var(--bg-card);
+  color: var(--accent-light);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 200px;
 }
 
 /* ═══════════════════════════════════════════════════════════════
