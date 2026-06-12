@@ -1,12 +1,13 @@
 import ThemeSwitcher from './ThemeSwitcher'
 import { useData } from '../context/DataContext'
-import { Edit2, Download, FileDown, KeyRound } from 'lucide-react'
+import { Edit2, Download, FileDown, KeyRound, LayoutDashboard } from 'lucide-react'
 
 export default function Header({
   onEditData,
   onDownloadTemplate,
   onExportPdf,
   onOpenKeyModal,
+  onManageWidgets,
   pdfStatus,
 }) {
   const { data, isCustom } = useData()
@@ -45,6 +46,14 @@ export default function Header({
           title="Configure Gemini AI key"
         >
           <KeyRound size={14} /> AI Key
+        </button>
+
+        <button
+          className="header-btn header-btn-secondary"
+          onClick={onManageWidgets}
+          title="Add or remove dashboard components"
+        >
+          <LayoutDashboard size={14} /> Widgets
         </button>
 
         <button

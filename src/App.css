@@ -146,6 +146,108 @@
   padding: 4px 0;
 }
 
+/* ── Prompt editor panel ────────────────────────────────────── */
+.ai-prompt-panel {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 0 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-prompt-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ai-prompt-hint {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.6;
+}
+
+.ai-prompt-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 72px;
+  outline: none;
+}
+
+.ai-prompt-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+.ai-prompt-textarea::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.ai-prompt-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.ai-prompt-unsaved {
+  font-size: 11px;
+  color: var(--chart-5);
+  font-style: italic;
+}
+
+.ai-prompt-active-note {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  padding: 8px 10px;
+  background: var(--accent-bg);
+  border-radius: 6px;
+  border-left: 2px solid var(--accent);
+}
+
+.ai-prompt-active-note em {
+  color: var(--accent-light);
+  font-style: normal;
+}
+
+/* Prompt toggle button active state */
+.ai-btn.active {
+  background: var(--accent-bg);
+  color: var(--accent-light);
+  border-color: var(--accent);
+}
+
+/* Chevron on prompt toggle */
+.ai-chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease !important;
+}
+.ai-chevron.open {
+  transform: rotate(180deg);
+}
+
 /* Empty state */
 .ai-empty {
   display: flex;
@@ -163,6 +265,201 @@
   margin: 0;
   max-width: 380px;
   line-height: 1.6;
+}
+
+/* ── Mode tabs ──────────────────────────────────────────────── */
+.ai-mode-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 0 0 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+
+.ai-mode-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  border-radius: 4px 4px 0 0;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.ai-mode-tab:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+.ai-mode-tab.active {
+  color: var(--accent-light);
+  border-bottom-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+/* ── Mode panel wrapper ─────────────────────────────────────── */
+.ai-mode-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Shared prompt section ──────────────────────────────────── */
+.ai-prompt-section {
+  padding: 16px 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.ai-prompt-section--compact {
+  padding: 12px 0 10px;
+  gap: 8px;
+}
+
+.ai-prompt-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ai-prompt-optional {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.6;
+}
+
+.ai-prompt-hint {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.55;
+  margin-left: auto;
+}
+
+.ai-prompt-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 80px;
+  outline: none;
+}
+
+.ai-prompt-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+.ai-prompt-textarea::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 12px;
+}
+
+.ai-prompt-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Summary mode — textarea + button side by side */
+.ai-summary-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.ai-prompt-textarea--inline {
+  min-height: 54px;
+  flex: 1;
+  resize: none;
+}
+
+.ai-summary-generate-btn {
+  flex-shrink: 0;
+  align-self: flex-end;
+  margin-bottom: 1px;
+}
+
+/* ── Manual output area ─────────────────────────────────────── */
+.ai-manual-output {
+  min-height: 60px;
+}
+
+.ai-manual-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-manual-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ai-manual-result-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ai-empty--manual {
+  padding: 12px 0;
+}
+
+/* ── Summary footer (Regenerate + focus tag) ────────────────── */
+.ai-summary-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.ai-summary-focus-tag {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 3px 8px;
+  background: var(--accent-bg);
+  border-radius: 4px;
+  border-left: 2px solid var(--accent);
+}
+
+.ai-summary-focus-tag em {
+  color: var(--accent-light);
+  font-style: normal;
 }
 
 /* AI Key header button */
@@ -289,13 +586,20 @@
   --header-bg:      #13151f;
 }
 
-/* Smooth theme transitions */
+/* Smooth theme transitions — exclude transform so dnd-kit drags are not delayed */
 *, *::before, *::after {
   transition:
     background-color 0.3s ease,
     border-color 0.3s ease,
     color 0.3s ease,
     box-shadow 0.3s ease;
+}
+
+/* Sortable widgets must never have a transition on transform —
+   dnd-kit sets that inline and the global rule would override it */
+.sortable-widget,
+.drag-overlay-ghost {
+  transition: none !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -316,8 +620,20 @@
 .main-content {
   flex: 1;
   padding: 24px 28px;
-  overflow-y: auto;
+  /* overflow must stay visible/unset so @dnd-kit pointer events
+     are not captured by this scroll container — page scrolls instead */
+  overflow: visible;
   min-width: 0;
+}
+
+/* Let the page body scroll instead of .main-content */
+html, body, #root {
+  height: auto;
+  min-height: 100%;
+}
+
+.app-body {
+  align-items: flex-start;
 }
 
 .section {
@@ -431,37 +747,191 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   THEME SWITCHER
+   THEME SWITCHER — dropdown
 ═══════════════════════════════════════════════════════════════ */
-.theme-switcher {
-  display: flex;
-  gap: 4px;
+.theme-dropdown {
+  position: relative;
+}
+
+.theme-dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 3px;
-}
-
-.theme-btn {
-  padding: 4px 10px;
-  border: none;
-  border-radius: 5px;
-  font-size: 11px;
+  border-radius: 7px;
+  color: var(--text-secondary);
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  background: transparent;
-  color: var(--text-muted);
-  letter-spacing: 0.3px;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
 }
 
-.theme-btn:hover {
+.theme-dropdown-toggle:hover {
   background: var(--bg-hover);
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  border-color: var(--accent);
 }
 
-.theme-btn.active {
-  background: var(--accent);
-  color: #fff;
+.theme-dropdown-label {
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.theme-chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease !important;
+}
+.theme-chevron.open {
+  transform: rotate(180deg);
+}
+
+.theme-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 200;
+  min-width: 190px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  /* brief pop-in */
+  animation: dropdown-in 0.12s ease;
+}
+
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.theme-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.theme-dropdown-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.theme-dropdown-item.active {
+  background: var(--accent-bg);
+  color: var(--accent-light);
+}
+
+.theme-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.theme-dropdown-item-label {
+  flex: 1;
+}
+
+.theme-check {
+  flex-shrink: 0;
+  color: var(--accent-light);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DRAG & DROP — SortableWidget
+═══════════════════════════════════════════════════════════════ */
+.sortable-widget {
+  position: relative;
+  /* Suppress the global 0.3s transition on transform so dnd moves
+     are immediate — the component overrides transition via inline style */
+}
+
+/* Suppress global transition on transform for dnd elements */
+.sortable-widget,
+.sortable-widget * {
+  /* The global * rule sets transition on bg/border/color — that's fine.
+     We only need to ensure transform has no extra delay. */
+}
+
+/* Drag handle — shown on hover of the whole widget */
+.drag-handle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: grab;
+  opacity: 0;
+  /* Only transition opacity — NOT transform, which would fight dnd */
+  transition: opacity 0.15s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sortable-widget:hover > .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:hover {
+  background: var(--bg-hover);
+  color: var(--accent-light);
+  border-color: var(--accent);
+}
+
+.drag-handle:active,
+.drag-handle[data-dragging] {
+  cursor: grabbing;
+  opacity: 1;
+}
+
+/* Placeholder while the item is being dragged */
+.sortable-widget.is-dragging {
+  outline: 2px dashed var(--accent);
+  outline-offset: 4px;
+  border-radius: 10px;
+  background: var(--accent-bg);
+}
+
+.sortable-widget.is-dragging > .drag-handle {
+  opacity: 1;
+  cursor: grabbing;
+}
+
+/* Ghost rendered in the DragOverlay (floating card) */
+.drag-overlay-ghost {
+  pointer-events: none;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  overflow: hidden;
+  opacity: 0.92;
+  border: 2px solid var(--accent);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1752,4 +2222,240 @@
 .add-row-btn:hover {
   background: var(--accent-bg);
   border-color: var(--accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WIDGET MANAGER PANEL
+═══════════════════════════════════════════════════════════════ */
+.wm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.wm-panel {
+  width: 340px;
+  max-width: 95vw;
+  height: 100%;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.4);
+  animation: wm-slide-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes wm-slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+.wm-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.wm-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.wm-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.wm-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.wm-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.wm-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wm-reset-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.wm-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+}
+
+.wm-close-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Widget list */
+.wm-list {
+  list-style: none;
+  margin: 0;
+  padding: 10px 12px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wm-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: default;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.wm-item--on {
+  background: var(--bg-card);
+  border-color: var(--border);
+}
+
+.wm-item--off {
+  background: transparent;
+  border-color: transparent;
+  opacity: 0.55;
+}
+
+.wm-item--off:hover {
+  opacity: 0.8;
+  background: var(--bg-hover);
+  border-color: var(--border);
+}
+
+.wm-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wm-item-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wm-item-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Toggle switch */
+.wm-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.wm-toggle-track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--border);
+  transition: background-color 0.2s ease;
+  display: block;
+  flex-shrink: 0;
+}
+
+.wm-toggle--on .wm-toggle-track {
+  background: var(--accent);
+}
+
+.wm-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s ease;
+  display: block;
+}
+
+.wm-toggle--on .wm-toggle-thumb {
+  transform: translateX(16px);
+}
+
+.wm-toggle-icon {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.wm-toggle--on .wm-toggle-icon {
+  color: var(--accent-light);
+}
+
+.wm-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.wm-footer-note {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.6;
 }

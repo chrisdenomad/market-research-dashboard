@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react'
 
 const navItems = [
   { id: 'kpi',         label: 'Overview' },
-  { id: 'market-size', label: 'Market Size' },
-  { id: 'capacity',    label: 'Market Capacity' },
-  { id: 'sourcing',    label: 'Sourcing Outlook' },
+  { id: 'market-size', label: 'Market Supply' },
   { id: 'insights',    label: 'Key Insights' },
-  { id: 'benchmark',   label: 'Market Rates' },
-  { id: 'methodology', label: 'Methodology' },
+  { id: 'benchmark',   label: 'Salary Benchmark' },
+  { id: 'methodology', label: 'Search Methodology' },
+  { id: 'sourcing',    label: 'Sourcing Outlook' },
 ]
 
 export default function Sidebar() {
