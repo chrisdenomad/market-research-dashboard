@@ -3,11 +3,12 @@ import { useData } from '../context/DataContext'
 export default function MarketRateBenchmark() {
   const { data } = useData()
   const salaryBenchmarkData = data.salaryBenchmarkData || []
+  const titles = data.widgetTitles || {}
   return (
     <div className="card" id="benchmark">
       <div className="card-header">
         <div>
-          <h2 className="card-title">Market Rate Benchmark</h2>
+          <h2 className="card-title">{titles.benchmark || 'Market Rate Benchmark'}</h2>
           <p className="card-subtitle">Salary ranges by location based on hiring platform data</p>
         </div>
         <span className="card-badge">Compensation</span>

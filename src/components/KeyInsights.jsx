@@ -15,7 +15,7 @@ export default function KeyInsights() {
     <div className="card" id="insights">
       <div className="card-header">
         <div>
-          <h2 className="card-title">Key Insights</h2>
+          <h2 className="card-title">{(data.widgetTitles || {}).keyInsights || 'Key Insights'}</h2>
           <p className="card-subtitle">Critical findings from the market research</p>
         </div>
         <div className="tag-legend">

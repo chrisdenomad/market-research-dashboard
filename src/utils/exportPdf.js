@@ -1,11 +1,21 @@
-import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
-
 /**
  * Captures the full #pdf-export-root element section by section
  * and builds a multi-page A4 PDF.
+ *
+ * html2canvas and jsPDF are dynamically imported so they are NOT
+ * included in the initial bundle — they load only when this function
+ * is first called (i.e. when the user clicks Export PDF).
  */
 export async function exportDashboardPdf(reportMeta, onProgress) {
+  const [h2cMod, jspdfMod] = await Promise.all([
+    import('html2canvas'),
+    import('jspdf'),
+  ])
+
+  // html2canvas exports a default function; jsPDF v4 exports a named `jsPDF`
+  const html2canvas = h2cMod.default || h2cMod
+  const jsPDF       = jspdfMod.jsPDF || jspdfMod.default
+
   const root = document.getElementById('pdf-export-root')
   if (!root) throw new Error('PDF root element not found')
 

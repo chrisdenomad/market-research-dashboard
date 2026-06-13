@@ -1,8 +1,9 @@
-import * as XLSX from 'xlsx'
-
 // Maps Excel sheet names → internal data keys
 // Each mapper receives an array of row objects (headers as keys)
 // and returns the correctly shaped data structure.
+//
+// xlsx is dynamically imported inside parseExcelFile so it is NOT
+// included in the initial bundle — it loads only when a file is imported.
 
 function toNum(v) {
   const n = Number(v)
@@ -16,8 +17,9 @@ function toStr(v) {
 export function parseExcelFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
+        const { default: XLSX } = await import('xlsx')
         const wb = XLSX.read(e.target.result, { type: 'array' })
         const result = {}
 
@@ -35,6 +37,19 @@ export function parseExcelFile(file) {
           }
         }
 
+        // ── KPIData ───────────────────────────────────────────
+        if (wb.SheetNames.includes('KPIData')) {
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets['KPIData'])
+          result.kpiData = rows.map((r) => ({
+            label:  toStr(r.label),
+            value:  toStr(r.value),
+            unit:   toStr(r.unit),
+            change: toStr(r.change),
+            trend:  toStr(r.trend) || 'neutral',
+            icon:   toStr(r.icon)  || 'users',
+          }))
+        }
+
         // ── MarketSize ────────────────────────────────────────
         if (wb.SheetNames.includes('MarketSize')) {
           const rows = XLSX.utils.sheet_to_json(wb.Sheets['MarketSize'])
@@ -48,26 +63,26 @@ export function parseExcelFile(file) {
         // ── MarketCapacity ─────────────────────────────────────
         if (wb.SheetNames.includes('MarketCapacity')) {
           const rows = XLSX.utils.sheet_to_json(wb.Sheets['MarketCapacity'])
-          const colors = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd']
+          const fallbackColors = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd']
           result.marketCapacityData = rows.map((r, i) => ({
             label:       toStr(r.label),
             fullLabel:   toStr(r.fullLabel),
             value:       toNum(r.value),
             description: toStr(r.description),
-            color:       colors[i] || colors[colors.length - 1],
+            color:       toStr(r.color) || fallbackColors[i] || fallbackColors[fallbackColors.length - 1],
           }))
         }
 
         // ── SourcingFunnel ─────────────────────────────────────
         if (wb.SheetNames.includes('SourcingFunnel')) {
           const rows = XLSX.utils.sheet_to_json(wb.Sheets['SourcingFunnel'])
-          const colors = ['#6366f1','#8b5cf6','#a78bfa','#c4b5fd','#ddd6fe']
+          const fallbackColors = ['#6366f1','#8b5cf6','#a78bfa','#c4b5fd','#ddd6fe']
           result.sourcingFunnelData = rows.map((r, i) => ({
             stage: toStr(r.stage),
             count: toNum(r.count),
             pct:   toNum(r.pct),
             note:  toStr(r.note),
-            color: colors[i] || colors[colors.length - 1],
+            color: toStr(r.color) || fallbackColors[i] || fallbackColors[fallbackColors.length - 1],
           }))
         }
 
@@ -128,6 +143,39 @@ export function parseExcelFile(file) {
         if (wb.SheetNames.includes('Disclaimers')) {
           const rows = XLSX.utils.sheet_to_json(wb.Sheets['Disclaimers'])
           result.disclaimers = rows.map((r) => toStr(r.text))
+        }
+
+        // ── GeoRegions ─────────────────────────────────────────
+        if (wb.SheetNames.includes('GeoRegions')) {
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets['GeoRegions'])
+          result.geoRegions = rows.map((r) => ({
+            id:          toStr(r.id),
+            name:        toStr(r.name),
+            country:     toStr(r.country),
+            countryCode: toStr(r.countryCode),
+            zone:        toStr(r.zone),
+            supply:      toNum(r.supply),
+            available:   toNum(r.available),
+            lat:         toNum(r.lat),
+            lng:         toNum(r.lng),
+            color:       toStr(r.color) || '#6366f1',
+            yoyChange:   toNum(r.yoyChange),
+            marketShare: toNum(r.marketShare),
+          }))
+        }
+
+        // ── GeoTrend ───────────────────────────────────────────
+        if (wb.SheetNames.includes('GeoTrend')) {
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets['GeoTrend'])
+          // Each row is { month, sg, syd, hk, ... } — preserve all columns as-is,
+          // coercing numeric values and keeping month as a string.
+          result.geoTrendData = rows.map((r) => {
+            const entry = {}
+            Object.keys(r).forEach((k) => {
+              entry[k] = k === 'month' ? toStr(r[k]) : toNum(r[k])
+            })
+            return entry
+          })
         }
 
         resolve(result)

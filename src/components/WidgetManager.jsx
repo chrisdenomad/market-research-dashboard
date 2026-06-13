@@ -3,14 +3,15 @@ import { X, RotateCcw, Eye, EyeOff } from 'lucide-react'
 
 // All possible widgets with their display metadata
 export const ALL_WIDGETS = [
-  { id: 'ai-overview',     label: 'AI Market Overview',     description: 'AI-generated market summary' },
-  { id: 'kpi',             label: 'Overview KPIs',          description: 'Key performance indicators' },
-  { id: 'market-size',     label: 'Market Size Chart',      description: 'Market size by city (bar chart)' },
-  { id: 'market-capacity', label: 'Market Capacity',        description: 'TAM / SAM / SOM funnel' },
-  { id: 'sourcing',        label: 'Sourcing Outlook',       description: 'Hiring funnel & sourcing stats' },
-  { id: 'key-insights',    label: 'Key Insights',           description: 'Color-coded insight cards' },
-  { id: 'benchmark',       label: 'Salary Benchmark',       description: 'Market rate & salary table' },
-  { id: 'methodology',     label: 'Search Methodology',     description: 'Criteria, sources & confidence' },
+  { id: 'ai-overview',       label: 'AI Market Overview',       description: 'AI-generated market summary' },
+  { id: 'kpi',               label: 'Overview Metrics',         description: 'Key metrics summary cards' },
+  { id: 'market-size',       label: 'Market Size Chart',        description: 'Market size by city (bar chart)' },
+  { id: 'market-capacity',   label: 'Market Capacity',          description: 'TAM / SAM / SOM funnel' },
+  { id: 'geo-distribution',  label: 'Geographic Distribution',  description: 'Interactive map, trends & region compare' },
+  { id: 'sourcing',          label: 'Sourcing Outlook',         description: 'Hiring funnel & sourcing stats' },
+  { id: 'key-insights',      label: 'Key Insights',             description: 'Color-coded insight cards' },
+  { id: 'benchmark',         label: 'Salary Benchmark',         description: 'Market rate & salary table' },
+  { id: 'methodology',       label: 'Search Methodology',       description: 'Criteria, sources & confidence' },
 ]
 
 export default function WidgetManager({ visibleWidgets, onToggle, onReset, onClose }) {

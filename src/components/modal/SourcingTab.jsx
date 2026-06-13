@@ -42,15 +42,31 @@ export default function SourcingTab({ data, onChange }) {
           <p className="form-section-desc">Each row is one bar in the funnel chart.</p>
         </div>
         <div className="table-editor">
-          <div className="table-editor-head" style={{ gridTemplateColumns: '2fr 1fr 1fr 2fr auto' }}>
-            <span>Stage Name</span><span>Count</span><span>Pct %</span><span>Note</span><span></span>
+          <div className="table-editor-head" style={{ gridTemplateColumns: '2fr 1fr 1fr 2fr 80px auto' }}>
+            <span>Stage Name</span><span>Count</span><span>Pct %</span><span>Note</span><span>Color</span><span></span>
           </div>
           {funnel.map((r, i) => (
-            <div key={i} className="table-editor-row" style={{ gridTemplateColumns: '2fr 1fr 1fr 2fr auto' }}>
+            <div key={i} className="table-editor-row" style={{ gridTemplateColumns: '2fr 1fr 1fr 2fr 80px auto' }}>
               <input className="form-input" value={r.stage} onChange={(e) => setFunnelRow(i, 'stage', e.target.value)} />
               <input className="form-input" type="number" value={r.count} onChange={(e) => setFunnelRow(i, 'count', e.target.value)} />
               <input className="form-input" type="number" value={r.pct}   onChange={(e) => setFunnelRow(i, 'pct',   e.target.value)} />
               <input className="form-input" value={r.note}  onChange={(e) => setFunnelRow(i, 'note',  e.target.value)} />
+              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                <input
+                  type="color"
+                  value={r.color || '#6366f1'}
+                  onChange={(e) => setFunnelRow(i, 'color', e.target.value)}
+                  style={{ width: 30, height: 30, padding: 2, borderRadius: 4, border: '1px solid var(--border)', cursor: 'pointer', background: 'none' }}
+                  title="Pick color"
+                />
+                <input
+                  className="form-input"
+                  value={r.color || ''}
+                  onChange={(e) => setFunnelRow(i, 'color', e.target.value)}
+                  placeholder="#6366f1"
+                  style={{ flex: 1, fontSize: 11 }}
+                />
+              </div>
               <button className="row-delete-btn" onClick={() => removeFunnelRow(i)}><Trash2 size={14}/></button>
             </div>
           ))}

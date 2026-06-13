@@ -1,13 +1,10 @@
-import ThemeSwitcher from './ThemeSwitcher'
 import { useData } from '../context/DataContext'
-import { Edit2, Download, FileDown, KeyRound, LayoutDashboard } from 'lucide-react'
+import { Edit2, Sheet, FileDown } from 'lucide-react'
 
 export default function Header({
   onEditData,
   onDownloadTemplate,
   onExportPdf,
-  onOpenKeyModal,
-  onManageWidgets,
   pdfStatus,
 }) {
   const { data, isCustom } = useData()
@@ -40,49 +37,32 @@ export default function Header({
           Prepared by <strong>{reportMeta.preparedBy}</strong>
         </span>
 
+        {/* Icon-only buttons */}
         <button
-          className="header-btn header-btn-ai"
-          onClick={onOpenKeyModal}
-          title="Configure Gemini AI key"
-        >
-          <KeyRound size={14} /> AI Key
-        </button>
-
-        <button
-          className="header-btn header-btn-secondary"
-          onClick={onManageWidgets}
-          title="Add or remove dashboard components"
-        >
-          <LayoutDashboard size={14} /> Widgets
-        </button>
-
-        <button
-          className="header-btn header-btn-secondary"
+          className="header-icon-btn header-icon-btn-excel"
           onClick={onDownloadTemplate}
           title="Download Excel template"
         >
-          <Download size={14} /> Template
+          <Sheet size={15} />
         </button>
 
         <button
-          className="header-btn header-btn-pdf"
+          className="header-icon-btn header-icon-btn-pdf"
           onClick={onExportPdf}
           disabled={!!pdfStatus}
-          title="Export dashboard as PDF"
+          title={pdfStatus || 'Export dashboard as PDF'}
         >
-          <FileDown size={14} />
-          {pdfStatus ? pdfStatus : 'Export PDF'}
+          <FileDown size={15} />
         </button>
 
+        {/* Primary action */}
         <button
-          className="header-btn header-btn-primary"
+          className="header-icon-btn header-icon-btn-edit"
           onClick={onEditData}
           title="Edit dashboard data"
         >
-          <Edit2 size={14} /> Edit Data
+          <Edit2 size={15} />
         </button>
-
-        <ThemeSwitcher />
       </div>
     </header>
   )

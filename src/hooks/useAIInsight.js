@@ -41,8 +41,10 @@ function buildDataContext(data) {
   const mktSize  = data.marketSizeData      || []
   const cap      = data.marketCapacityData  || []
   const stats    = data.sourcingStats       || []
+  const funnel   = data.sourcingFunnelData  || []
   const salary   = data.salaryBenchmarkData || []
   const insights = data.keyInsightsData     || []
+  const geo      = data.geoRegions          || []
 
   const totalProfiles  = mktSize.reduce((s, r) => s + (r.size      || 0), 0)
   const totalAvailable = mktSize.reduce((s, r) => s + (r.available || 0), 0)
@@ -52,9 +54,14 @@ function buildDataContext(data) {
     `  - ${r.city}: ${r.size} profiles, ${r.available} available (${r.size ? Math.round((r.available / r.size) * 100) : 0}%)`
   ).join('\n')
 
-  const tamLine = cap.find((c) => c.label === 'TAM')
-  const samLine = cap.find((c) => c.label === 'SAM')
-  const somLine = cap.find((c) => c.label === 'SOM')
+  const tamLine    = cap.find((c) => c.label === 'TAM')
+  const samLine    = cap.find((c) => c.label === 'SAM')
+  const somLine    = cap.find((c) => c.label === 'SOM')
+  const targetLine = cap.find((c) => c.label === 'Target')
+
+  const funnelLines = funnel.map((f) =>
+    `  - ${f.stage}: ${f.count} (${f.pct}%)${f.note ? ' — ' + f.note : ''}`
+  ).join('\n')
 
   const conversionStat = stats.find((s) => s.label?.toLowerCase().includes('conversion'))
   const ttfStat        = stats.find((s) => s.label?.toLowerCase().includes('time'))
@@ -74,6 +81,13 @@ function buildDataContext(data) {
     .filter((i) => i.tag === 'Opportunity' || i.tag === 'Trend')
     .map((i) => `  - [${i.tag}] ${i.title}`).join('\n')
 
+  // Extra geo cities beyond the primary marketSizeData cities
+  const primaryCities = new Set(mktSize.map((m) => m.city?.toLowerCase()))
+  const extraGeoLines = geo
+    .filter((r) => !primaryCities.has(r.name?.toLowerCase()))
+    .map((r) => `  - ${r.name} (${r.country}): ${r.supply} profiles, ${r.available} available, YoY ${r.yoyChange >= 0 ? '+' : ''}${r.yoyChange}%`)
+    .join('\n')
+
   return `RESEARCH DATA:
 Role: ${meta.role || 'N/A'}
 Company: ${meta.company || 'N/A'}
@@ -84,11 +98,16 @@ Total profiles identified: ${totalProfiles}
 Total available candidates: ${totalAvailable} (${availRate}% availability rate)
 By location:
 ${locationLines || '  No location data'}
+${extraGeoLines ? `\nAdditional markets:\n${extraGeoLines}` : ''}
 
 TALENT FUNNEL:
-${tamLine ? `TAM: ${tamLine.value} profiles` : ''}
-${samLine ? `SAM: ${samLine.value} profiles` : ''}
-${somLine ? `SOM: ${somLine.value} candidates` : ''}
+${tamLine    ? `TAM: ${tamLine.value} profiles — ${tamLine.description || ''}` : ''}
+${samLine    ? `SAM: ${samLine.value} profiles — ${samLine.description || ''}` : ''}
+${somLine    ? `SOM: ${somLine.value} candidates — ${somLine.description || ''}` : ''}
+${targetLine ? `Target: ${targetLine.value} — ${targetLine.description || ''}` : ''}
+
+SOURCING FUNNEL (conversion pipeline):
+${funnelLines || '  No funnel data'}
 
 SOURCING OUTLOOK:
 ${conversionStat ? `Conversion rate: ${conversionStat.value}` : ''}
@@ -216,8 +235,12 @@ export function useAIInsight(data) {
   const dataHash = JSON.stringify({
     reportMeta:          data.reportMeta,
     marketSizeData:      data.marketSizeData,
+    marketCapacityData:  data.marketCapacityData,
+    sourcingFunnelData:  data.sourcingFunnelData,
+    sourcingStats:       data.sourcingStats,
     keyInsightsData:     data.keyInsightsData,
     salaryBenchmarkData: data.salaryBenchmarkData,
+    geoRegions:          data.geoRegions,
   })
   const prevHashRef = useRef(null)
 
@@ -248,6 +271,7 @@ export function useAIInsight(data) {
   return {
     // shared
     apiKey, updateApiKey, mode, setMode,
+    hasKey: !!apiKey,
     customInstruction, updateInstruction,
     // mode 1 — manual
     manualOutput, manualLoading, manualError, generateManual,

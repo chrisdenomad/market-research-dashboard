@@ -1,8 +1,8 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical } from 'lucide-react'
+import { GripVertical, Pencil } from 'lucide-react'
 
-export default function SortableWidget({ id, children, className = '' }) {
+export default function SortableWidget({ id, children, className = '', onEdit }) {
   const {
     attributes,
     listeners,
@@ -14,10 +14,7 @@ export default function SortableWidget({ id, children, className = '' }) {
   } = useSortable({ id })
 
   const style = {
-    // Use translate-only so the widget stays in-flow while dragging
     transform: CSS.Transform.toString(transform),
-    // Only apply transition when NOT dragging — during drag we want
-    // immediate response; transition comes back on drop
     transition: isDragging ? 'none' : transition,
     position: 'relative',
     zIndex: isDragging ? 2 : 'auto',
@@ -30,18 +27,30 @@ export default function SortableWidget({ id, children, className = '' }) {
       style={style}
       className={`sortable-widget ${isDragging ? 'is-dragging' : ''} ${className}`}
     >
-      {/* Grip handle — visible on hover, used as the drag activator */}
-      <div
-        ref={setActivatorNodeRef}
-        className="drag-handle"
-        {...listeners}
-        {...attributes}
-        title="Drag to reorder"
-        role="button"
-        aria-roledescription="sortable"
-        tabIndex={0}
-      >
-        <GripVertical size={15} />
+      {/* Controls — shown on hover: edit button + drag handle */}
+      <div className="widget-controls">
+        {onEdit && (
+          <button
+            className="widget-edit-btn"
+            onClick={onEdit}
+            title="Edit this section's data"
+            type="button"
+          >
+            <Pencil size={13} />
+          </button>
+        )}
+        <div
+          ref={setActivatorNodeRef}
+          className="drag-handle"
+          {...listeners}
+          {...attributes}
+          title="Drag to reorder"
+          role="button"
+          aria-roledescription="sortable"
+          tabIndex={0}
+        >
+          <GripVertical size={15} />
+        </div>
       </div>
 
       {children}

@@ -20,12 +20,13 @@ export default function MarketCapacity() {
   const marketCapacityData = data.marketCapacityData || []
   const max = marketCapacityData[0]?.value || 1
   const chartData = marketCapacityData.map((d) => ({ ...d, fill: d.color }))
+  const titles = data.widgetTitles || {}
 
   return (
     <div className="card" id="capacity">
       <div className="card-header">
         <div>
-          <h2 className="card-title">Market Capacity</h2>
+          <h2 className="card-title">{titles.marketCapacity || 'Market Capacity'}</h2>
           <p className="card-subtitle">Talent funnel — from total market to reachable candidates</p>
         </div>
         <span className="card-badge">Funnel</span>

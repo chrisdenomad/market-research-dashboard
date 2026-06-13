@@ -3,6 +3,7 @@ import {
   Sparkles, RefreshCw, KeyRound, AlertTriangle,
   Send, MessageSquare, BarChart2,
 } from 'lucide-react'
+import { useData } from '../context/DataContext'
 
 // ── Error message maps ────────────────────────────────────────────
 const TOKEN_ERRORS = {
@@ -33,8 +34,10 @@ export default function AIInsightCard({
   // Mode 1 — manual
   manualOutput, manualLoading, manualError, onManualGenerate,
   // Shared
-  onOpenKeyModal, mode, onModeChange,
+  onOpenKeyModal, mode, onModeChange, hasKey,
 }) {
+  const { data } = useData()
+  const titles = data.widgetTitles || {}
   const [manualDraft,  setManualDraft]  = useState('')
   const [summaryDraft, setSummaryDraft] = useState(customInstruction || '')
 
@@ -82,7 +85,7 @@ export default function AIInsightCard({
         <div className="ai-card-title-row">
           <span className="ai-spark-icon"><Sparkles size={16} /></span>
           <div>
-            <h2 className="card-title">AI Market Overview</h2>
+            <h2 className="card-title">{titles.aiOverview || 'AI Market Overview'}</h2>
             <p className="card-subtitle">7 key insights · market supply & hiring prediction</p>
           </div>
         </div>
@@ -263,6 +266,12 @@ export default function AIInsightCard({
             )}
 
             {!loading && !error && !summary && (
+              hasKey ? (
+                <div className="ai-loading">
+                  <div className="ai-loading-dots"><span /><span /><span /></div>
+                  <span className="ai-loading-text">Analysing market data with GitHub Models…</span>
+                </div>
+              ) : (
               <div className="ai-empty">
                 <Sparkles size={22} style={{ opacity: 0.25 }} />
                 <p>
@@ -272,6 +281,7 @@ export default function AIInsightCard({
                   <KeyRound size={13} /> Add Token — it's free
                 </button>
               </div>
+              )
             )}
           </div>
         </div>

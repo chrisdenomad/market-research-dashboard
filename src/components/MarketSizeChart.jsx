@@ -20,11 +20,20 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function MarketSizeChart() {
   const { data } = useData()
   const marketSizeData = data.marketSizeData || []
+  const disclaimers    = data.methodologyData?.disclaimers || []
+  const titles         = data.widgetTitles || {}
+
+  // Use the disclaimer mentioning LinkedIn/profiles if present, else the first one
+  const chartNote =
+    disclaimers.find((d) => d.toLowerCase().includes('linkedin') || d.toLowerCase().includes('profiles')) ||
+    disclaimers[0] ||
+    null
+
   return (
     <div className="card" id="market-size">
       <div className="card-header">
         <div>
-          <h2 className="card-title">Market Size by Location</h2>
+          <h2 className="card-title">{titles.marketSize || 'Market Size by Location'}</h2>
           <p className="card-subtitle">Total identified profiles vs. candidates open to opportunities</p>
         </div>
         <span className="card-badge">LinkedIn Data</span>
@@ -85,8 +94,10 @@ export default function MarketSizeChart() {
           </tbody>
         </table>
         <p className="table-note">
-          * Research conducted on all visible LinkedIn profiles including local and non-local candidates.
-          Candidate Availability refers to profiles identified as potentially open to opportunities.
+          {chartNote
+            ? `* ${chartNote}`
+            : '* Research conducted on all visible LinkedIn profiles including local and non-local candidates. Candidate Availability refers to profiles identified as potentially open to opportunities.'
+          }
         </p>
       </div>
     </div>

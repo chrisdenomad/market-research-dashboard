@@ -4,13 +4,21 @@ export default function SourcingOutlook() {
   const { data } = useData()
   const sourcingFunnelData = data.sourcingFunnelData || []
   const sourcingStats      = data.sourcingStats      || []
+  const disclaimers        = data.methodologyData?.disclaimers || []
+  const titles             = data.widgetTitles || {}
   const max = sourcingFunnelData[0]?.count || 1
+
+  // Use the disclaimer that mentions "sourcing timeline" if present, else the last one
+  const sourcingNote =
+    disclaimers.find((d) => d.toLowerCase().includes('sourcing')) ||
+    disclaimers[disclaimers.length - 1] ||
+    null
 
   return (
     <div className="card" id="sourcing">
       <div className="card-header">
         <div>
-          <h2 className="card-title">Sourcing Outlook</h2>
+          <h2 className="card-title">{titles.sourcing || 'Sourcing Outlook'}</h2>
           <p className="card-subtitle">Conversion funnel based on historic recruiter data</p>
         </div>
         <span className="card-badge">Historic Data</span>
@@ -53,10 +61,9 @@ export default function SourcingOutlook() {
         </div>
       </div>
 
-      <p className="table-note" style={{ marginTop: 16 }}>
-        * Given that the process and nature of work for this role differ from previous IT positions,
-        this sourcing timeline analysis should be considered for reference purposes only.
-      </p>
+      {sourcingNote && (
+        <p className="table-note" style={{ marginTop: 16 }}>* {sourcingNote}</p>
+      )}
     </div>
   )
 }

@@ -4,11 +4,12 @@ import { AlertCircle } from 'lucide-react'
 export default function SearchMethodology() {
   const { data } = useData()
   const methodologyData = data.methodologyData || { criteria: [], sources: [], disclaimers: [] }
+  const titles = data.widgetTitles || {}
   return (
     <div className="card" id="methodology">
       <div className="card-header">
         <div>
-          <h2 className="card-title">Search Methodology</h2>
+          <h2 className="card-title">{titles.methodology || 'Search Methodology'}</h2>
           <p className="card-subtitle">Data sources, search criteria, and confidence levels</p>
         </div>
         <span className="card-badge">Transparency</span>

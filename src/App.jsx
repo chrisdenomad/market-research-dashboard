@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -30,29 +30,58 @@ import SourcingOutlook from './components/SourcingOutlook'
 import MarketRateBenchmark from './components/MarketRateBenchmark'
 import KeyInsights from './components/KeyInsights'
 import SearchMethodology from './components/SearchMethodology'
-import DataModal from './components/DataModal'
 import AIInsightCard from './components/AIInsightCard'
-import APIKeyModal from './components/APIKeyModal'
 import SortableWidget from './components/SortableWidget'
-import WidgetManager, { ALL_WIDGETS } from './components/WidgetManager'
+import GeographicDistribution from './components/GeographicDistribution'
+
+// Heavy modals — loaded on demand only when user opens them
+const DataModal     = lazy(() => import('./components/DataModal'))
+const APIKeyModal   = lazy(() => import('./components/APIKeyModal'))
+const WidgetManager = lazy(() => import('./components/WidgetManager'))
+
 import './App.css'
 
-// Lightweight label map for the drag overlay ghost
-const WIDGET_LABELS = Object.fromEntries(ALL_WIDGETS.map((w) => [w.id, w.label]))
+// Lightweight label map for the drag overlay ghost — pulled eagerly
+// because WidgetManager is now lazy but we still need ALL_WIDGETS here.
+// We duplicate the list to avoid importing the full lazy component.
+const ALL_WIDGET_DEFS = [
+  { id: 'ai-overview',        label: 'AI Overview' },
+  { id: 'kpi',                label: 'Metrics Summary' },
+  { id: 'market-size',        label: 'Market Size' },
+  { id: 'market-capacity',    label: 'Market Capacity' },
+  { id: 'geo-distribution',   label: 'Geographic Distribution' },
+  { id: 'sourcing',           label: 'Sourcing Outlook' },
+  { id: 'key-insights',       label: 'Key Insights' },
+  { id: 'benchmark',          label: 'Rate Benchmark' },
+  { id: 'methodology',        label: 'Methodology' },
+]
+const WIDGET_LABELS  = Object.fromEntries(ALL_WIDGET_DEFS.map((w) => [w.id, w.label]))
+const DEFAULT_WIDGETS = ALL_WIDGET_DEFS.map((w) => w.id)
 
-// ── Default widget order (all visible) ─────────────────────────
-const DEFAULT_WIDGETS = ALL_WIDGETS.map((w) => w.id)
+// Maps widget id → DataModal accordion section id
+const WIDGET_SECTION = {
+  'ai-overview':      'report',
+  'kpi':              'report',
+  'market-size':      'marketsize',
+  'market-capacity':  'capacity',
+  'geo-distribution': 'geo',
+  'sourcing':         'sourcing',
+  'key-insights':     'insights',
+  'benchmark':        'rates',
+  'methodology':      'methodology',
+}
 
 // Section IDs must match navItems ids in Sidebar.jsx
 const SECTION_IDS = {
-  'ai-overview':     'ai-overview-section',
-  'kpi':             'kpi',
-  'market-size':     'market-size',
-  'market-capacity': 'capacity',
-  'sourcing':        'sourcing',
-  'key-insights':    'insights',
-  'benchmark':       'benchmark',
-  'methodology':     'methodology',
+  'ai-overview':       'ai-overview-section',
+  'kpi':               'kpi',
+  'market-size':       'market-size',
+  'market-capacity':   'capacity',
+  'geo-distribution':  'geo-distribution',
+  'sourcing':          'sourcing',
+  'key-insights':      'insights',
+  'benchmark':         'benchmark',
+  'methodology':       'methodology',
 }
 
 const ORDER_KEY   = 'dashboard-widget-order'
@@ -80,7 +109,7 @@ function loadHiddenWidgets() {
 }
 
 // ── Widget content renderer ─────────────────────────────────────
-function WidgetContent({ id, data, summary, loading, error, generate, customInstruction, updateInstruction, mode, setMode, manualOutput, manualLoading, manualError, generateManual, onOpenKeyModal }) {
+function WidgetContent({ id, data, summary, loading, error, generate, hasKey, customInstruction, updateInstruction, mode, setMode, manualOutput, manualLoading, manualError, generateManual, onOpenKeyModal }) {
   const sectionId = SECTION_IDS[id]
   switch (id) {
     case 'ai-overview':
@@ -89,6 +118,7 @@ function WidgetContent({ id, data, summary, loading, error, generate, customInst
           <AIInsightCard
             summary={summary} loading={loading} error={error}
             onRegenerate={generate} onOpenKeyModal={onOpenKeyModal}
+            hasKey={hasKey}
             customInstruction={customInstruction}
             onInstructionChange={updateInstruction}
             onGenerate={(instruction) => generate(undefined, instruction)}
@@ -113,6 +143,8 @@ function WidgetContent({ id, data, summary, loading, error, generate, customInst
       return <section className="section" id={sectionId}><MarketSizeChart /></section>
     case 'market-capacity':
       return <section className="section" id={sectionId}><MarketCapacity /></section>
+    case 'geo-distribution':
+      return <section className="section" id={sectionId}><GeographicDistribution /></section>
     case 'sourcing':
       return <section className="section" id={sectionId}><SourcingOutlook /></section>
     case 'key-insights':
@@ -129,6 +161,7 @@ function WidgetContent({ id, data, summary, loading, error, generate, customInst
 function Dashboard() {
   const { data } = useData()
   const [modalOpen,       setModalOpen]       = useState(false)
+  const [editSection,     setEditSection]     = useState(null)
   const [keyModalOpen,    setKeyModalOpen]    = useState(false)
   const [widgetMgrOpen,   setWidgetMgrOpen]   = useState(false)
   const [pdfStatus,       setPdfStatus]       = useState(null)
@@ -138,7 +171,7 @@ function Dashboard() {
 
   const {
     summary, loading, error, generate,
-    apiKey, updateApiKey,
+    apiKey, updateApiKey, hasKey,
     customInstruction, updateInstruction,
     mode, setMode,
     manualOutput, manualLoading, manualError, generateManual,
@@ -172,6 +205,12 @@ function Dashboard() {
 
   function handleDragCancel() { setActiveId(null) }
 
+  // Open the data modal, optionally jumping to a specific section
+  function openEditModal(section = null) {
+    setEditSection(section)
+    setModalOpen(true)
+  }
+
   // Toggle a widget's visibility
   function handleToggleWidget(id) {
     setHiddenWidgets((prev) => {
@@ -191,6 +230,7 @@ function Dashboard() {
 
   const widgetProps = {
     data, summary, loading, error, generate,
+    hasKey,
     customInstruction, updateInstruction,
     mode, setMode,
     manualOutput, manualLoading, manualError, generateManual,
@@ -200,19 +240,21 @@ function Dashboard() {
   return (
     <div className="app">
       <Header
-        onEditData={() => setModalOpen(true)}
+        onEditData={() => openEditModal()}
         onDownloadTemplate={() => downloadExcelTemplate(data)}
-        onManageWidgets={() => setWidgetMgrOpen(true)}
         onExportPdf={async () => {
           try { await exportDashboardPdf(data.reportMeta, setPdfStatus) }
           catch (err) { console.error('PDF export failed:', err); setPdfStatus(null) }
         }}
-        onOpenKeyModal={() => setKeyModalOpen(true)}
         pdfStatus={pdfStatus}
       />
 
       <div className="app-body">
-        <Sidebar />
+        <Sidebar
+          visibleWidgets={visibleWidgets}
+          onOpenKeyModal={() => setKeyModalOpen(true)}
+          onManageWidgets={() => setWidgetMgrOpen(true)}
+        />
 
         <main className="main-content" id="pdf-export-root">
           <DndContext
@@ -225,7 +267,11 @@ function Dashboard() {
           >
             <SortableContext items={visibleWidgets} strategy={verticalListSortingStrategy}>
               {visibleWidgets.map((id) => (
-                <SortableWidget key={id} id={id}>
+                <SortableWidget
+                  key={id}
+                  id={id}
+                  onEdit={() => openEditModal(WIDGET_SECTION[id] ?? null)}
+                >
                   <WidgetContent id={id} {...widgetProps} />
                 </SortableWidget>
               ))}
@@ -247,24 +293,26 @@ function Dashboard() {
         </main>
       </div>
 
-      {/* Widget manager panel */}
-      {widgetMgrOpen && (
-        <WidgetManager
-          visibleWidgets={visibleWidgets}
-          onToggle={handleToggleWidget}
-          onReset={handleResetWidgets}
-          onClose={() => setWidgetMgrOpen(false)}
-        />
-      )}
+      {/* Widget manager panel — lazy loaded */}
+      <Suspense fallback={null}>
+        {widgetMgrOpen && (
+          <WidgetManager
+            visibleWidgets={visibleWidgets}
+            onToggle={handleToggleWidget}
+            onReset={handleResetWidgets}
+            onClose={() => setWidgetMgrOpen(false)}
+          />
+        )}
 
-      {modalOpen    && <DataModal onClose={() => setModalOpen(false)} />}
-      {keyModalOpen && (
-        <APIKeyModal
-          currentKey={apiKey}
-          onSave={(key) => updateApiKey(key)}
-          onClose={() => setKeyModalOpen(false)}
-        />
-      )}
+        {modalOpen    && <DataModal initialSection={editSection} onClose={() => { setModalOpen(false); setEditSection(null) }} />}
+        {keyModalOpen && (
+          <APIKeyModal
+            currentKey={apiKey}
+            onSave={(key) => updateApiKey(key)}
+            onClose={() => setKeyModalOpen(false)}
+          />
+        )}
+      </Suspense>
 
       {pdfStatus && (
         <div className="pdf-progress-overlay">

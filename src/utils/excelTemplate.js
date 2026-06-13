@@ -1,11 +1,15 @@
-import * as XLSX from 'xlsx'
+// xlsx is dynamically imported inside downloadExcelTemplate so it is NOT
+// included in the initial bundle — it loads only when the user clicks
+// "Download Template" for the first time.
 import * as mockData from '../data/mockData'
 
-export function downloadExcelTemplate(currentData) {
+export async function downloadExcelTemplate(currentData) {
+  const { default: XLSX } = await import('xlsx')
   const wb = XLSX.utils.book_new()
 
   const d = currentData || {}
   const meta    = d.reportMeta          || mockData.reportMeta
+  const kpi     = d.kpiData             || mockData.kpiData
   const mktSize = d.marketSizeData      || mockData.marketSizeData
   const cap     = d.marketCapacityData  || mockData.marketCapacityData
   const funnel  = d.sourcingFunnelData  || mockData.sourcingFunnelData
@@ -13,6 +17,8 @@ export function downloadExcelTemplate(currentData) {
   const salary  = d.salaryBenchmarkData || mockData.salaryBenchmarkData
   const insights= d.keyInsightsData     || mockData.keyInsightsData
   const method  = d.methodologyData     || mockData.methodologyData
+  const geoRegs = d.geoRegions          || mockData.geoRegions
+  const geoTrend= d.geoTrendData        || mockData.geoTrendData
 
   // ── Meta ──────────────────────────────────────────────────
   XLSX.utils.book_append_sheet(wb,
@@ -23,6 +29,15 @@ export function downloadExcelTemplate(currentData) {
       { key: 'preparedBy', value: meta.preparedBy },
       { key: 'company',    value: meta.company },
     ]), 'Meta')
+
+  // ── KPIData ───────────────────────────────────────────────
+  XLSX.utils.book_append_sheet(wb,
+    XLSX.utils.json_to_sheet(
+      kpi.map((r) => ({
+        label: r.label, value: r.value, unit: r.unit,
+        change: r.change, trend: r.trend, icon: r.icon,
+      }))
+    ), 'KPIData')
 
   // ── MarketSize ────────────────────────────────────────────
   XLSX.utils.book_append_sheet(wb,
@@ -35,7 +50,7 @@ export function downloadExcelTemplate(currentData) {
     XLSX.utils.json_to_sheet(
       cap.map((r) => ({
         label: r.label, fullLabel: r.fullLabel,
-        value: r.value, description: r.description,
+        value: r.value, description: r.description, color: r.color,
       }))
     ), 'MarketCapacity')
 
@@ -43,7 +58,7 @@ export function downloadExcelTemplate(currentData) {
   XLSX.utils.book_append_sheet(wb,
     XLSX.utils.json_to_sheet(
       funnel.map((r) => ({
-        stage: r.stage, count: r.count, pct: r.pct, note: r.note,
+        stage: r.stage, count: r.count, pct: r.pct, note: r.note, color: r.color,
       }))
     ), 'SourcingFunnel')
 
@@ -88,6 +103,22 @@ export function downloadExcelTemplate(currentData) {
     XLSX.utils.json_to_sheet(
       (method.disclaimers || []).map((text) => ({ text }))
     ), 'Disclaimers')
+
+  // ── GeoRegions ────────────────────────────────────────────
+  XLSX.utils.book_append_sheet(wb,
+    XLSX.utils.json_to_sheet(
+      geoRegs.map((r) => ({
+        id: r.id, name: r.name, country: r.country, countryCode: r.countryCode,
+        zone: r.zone, supply: r.supply, available: r.available,
+        lat: r.lat, lng: r.lng, color: r.color,
+        yoyChange: r.yoyChange, marketShare: r.marketShare,
+      }))
+    ), 'GeoRegions')
+
+  // ── GeoTrend ──────────────────────────────────────────────
+  XLSX.utils.book_append_sheet(wb,
+    XLSX.utils.json_to_sheet(geoTrend),
+    'GeoTrend')
 
   XLSX.writeFile(wb, 'market-research-template.xlsx')
 }
