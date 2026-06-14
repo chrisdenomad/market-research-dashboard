@@ -4,6 +4,13 @@
   box-sizing: border-box;
 }
 
+/* Force all form elements to use the page font — fixes both on-screen
+   rendering and html2canvas PDF capture (which reads computed styles). */
+input, textarea, select, button {
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-size: inherit;
+}
+
 body {
   margin: 0;
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;

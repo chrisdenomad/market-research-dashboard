@@ -2,11 +2,11 @@
    AI INSIGHT CARD
 ═══════════════════════════════════════════════════════════════ */
 .ai-insight-card {
-  border-color: rgba(99,102,241,0.3);
+  border-color: #3d3f6e;
   background: linear-gradient(
     135deg,
     var(--bg-card) 0%,
-    color-mix(in srgb, var(--bg-card) 85%, var(--accent) 15%) 100%
+    var(--bg-secondary) 100%
   );
 }
 
@@ -128,9 +128,9 @@
 }
 
 .ai-error-warn {
-  background: rgba(245,158,11,0.08);
+  background: #2e2008;
   color: #f59e0b;
-  border: 1px solid rgba(245,158,11,0.25);
+  border: 1px solid #6b4a10;
 }
 
 .ai-inline-key-btn {
@@ -1337,22 +1337,24 @@ html, body, #root {
 .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin: -24px -24px 20px -24px;
-  padding: 14px 20px 14px 20px;
+  padding: 12px 20px;
   gap: 12px;
   flex-wrap: wrap;
-  background: color-mix(in srgb, var(--bg-card) 60%, var(--accent) 6%);
-  border-bottom: 1px solid var(--border);
+  background: var(--accent);
+  border-bottom: none;
+  border-left: none;
   border-radius: 12px 12px 0 0;
 }
 
 .card-title {
-  margin: 0 0 3px;
-  font-size: 15px;
+  margin: 0 0 2px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: 0.1px;
+  color: #ffffff;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1362,22 +1364,23 @@ html, body, #root {
   content: '';
   display: inline-block;
   width: 3px;
-  height: 15px;
+  height: 16px;
   border-radius: 2px;
-  background: var(--accent);
+  background: rgba(255,255,255,0.5);
   flex-shrink: 0;
 }
 
 .card-subtitle {
   margin: 0 0 0 11px;
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 0.1px;
 }
 
 .card-badge {
-  background: var(--accent-bg);
-  color: var(--accent-light);
-  border: 1px solid var(--accent);
+  background: rgba(255,255,255,0.18);
+  color: #ffffff;
+  border: none;
   border-radius: 20px;
   padding: 3px 10px;
   font-size: 11px;
@@ -1481,21 +1484,18 @@ html, body, #root {
 }
 
 .badge-blue {
-  background: rgba(6,182,212,0.12);
+  background: #0e3a42;
   color: #06b6d4;
-  border: 1px solid rgba(6,182,212,0.3);
 }
 
 .badge-green {
-  background: rgba(16,185,129,0.12);
+  background: #0d3327;
   color: #10b981;
-  border: 1px solid rgba(16,185,129,0.3);
 }
 
 .badge-purple {
   background: var(--accent-bg);
   color: var(--accent-light);
-  border: 1px solid var(--accent);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1917,8 +1917,8 @@ html, body, #root {
 }
 
 .disclaimer-box {
-  background: rgba(245, 158, 11, 0.06);
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: #2a1f08;
+  border: 1px solid #6b4a10;
   border-radius: 8px;
   padding: 16px 20px;
 }
@@ -2119,9 +2119,9 @@ html, body, #root {
 }
 
 .custom-data-badge {
-  background: rgba(16,185,129,0.12);
+  background: #0d3327;
   color: #10b981;
-  border: 1px solid rgba(16,185,129,0.3);
+  border: none;
   border-radius: 4px;
   padding: 1px 7px;
   font-size: 10px;
@@ -2912,12 +2912,12 @@ html, body, #root {
   --geo-ocean:        #0d1526;
   --geo-land:         #1e2a3a;
   --geo-land-stroke:  #2e3f55;
-  --geo-grid:         rgba(99,102,241,0.08);
+  --geo-grid:         #1e2035;
 }
 
 /* ── Card ───────────────────────────────────────────────────── */
 .geo-card {
-  border-color: rgba(99,102,241,0.2);
+  border-color: #2d3060;
 }
 
 .geo-header-stats {
@@ -3528,7 +3528,7 @@ html, body, #root {
   margin-left: 4px;
 }
 
-.geo-row-alt td { background: rgba(99,102,241,0.03); }
+.geo-row-alt td { background: #1a1d2e; }
 
 .geo-region-cell {
   display: flex;
@@ -3582,9 +3582,9 @@ html, body, #root {
   white-space: nowrap;
 }
 
-.geo-badge-up   { background: rgba(34,197,94,0.12);  color: #22c55e; }
-.geo-badge-down { background: rgba(239,68,68,0.12);  color: #ef4444; }
-.geo-badge-flat { background: rgba(100,116,139,0.12); color: var(--text-muted); }
+.geo-badge-up   { background: #0d3320; color: #22c55e; }
+.geo-badge-down { background: #3b1212; color: #ef4444; }
+.geo-badge-flat { background: #1e2535; color: var(--text-muted); }
 
 /* ── Comparison ─────────────────────────────────────────────── */
 .geo-compare-empty {

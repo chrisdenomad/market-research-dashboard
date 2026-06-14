@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react'
+import { useState, lazy, Suspense, memo } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -109,7 +109,7 @@ function loadHiddenWidgets() {
 }
 
 // ── Widget content renderer ─────────────────────────────────────
-function WidgetContent({ id, data, summary, loading, error, generate, hasKey, customInstruction, updateInstruction, mode, setMode, manualOutput, manualLoading, manualError, generateManual, onOpenKeyModal }) {
+const WidgetContent = memo(function WidgetContent({ id, data, summary, loading, error, generate, hasKey, customInstruction, updateInstruction, mode, setMode, manualOutput, manualLoading, manualError, generateManual, onOpenKeyModal }) {
   const sectionId = SECTION_IDS[id]
   switch (id) {
     case 'ai-overview':
@@ -156,7 +156,7 @@ function WidgetContent({ id, data, summary, loading, error, generate, hasKey, cu
     default:
       return null
   }
-}
+})
 
 function Dashboard() {
   const { data } = useData()
@@ -238,7 +238,7 @@ function Dashboard() {
   }
 
   return (
-    <div className="app">
+    <div className="app" id="pdf-export-root">
       <Header
         onEditData={() => openEditModal()}
         onDownloadTemplate={() => downloadExcelTemplate(data)}
@@ -256,7 +256,7 @@ function Dashboard() {
           onManageWidgets={() => setWidgetMgrOpen(true)}
         />
 
-        <main className="main-content" id="pdf-export-root">
+        <main className="main-content">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}

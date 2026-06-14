@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 
 const STORAGE_KEY      = 'github-ai-token'
 const INSTRUCTION_KEY  = 'ai-custom-instruction'
@@ -232,7 +232,7 @@ export function useAIInsight(data) {
   }, [data, apiKey, customInstruction]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-generate summary when key/data changes
-  const dataHash = JSON.stringify({
+  const dataHash = useMemo(() => JSON.stringify({
     reportMeta:          data.reportMeta,
     marketSizeData:      data.marketSizeData,
     marketCapacityData:  data.marketCapacityData,
@@ -241,7 +241,16 @@ export function useAIInsight(data) {
     keyInsightsData:     data.keyInsightsData,
     salaryBenchmarkData: data.salaryBenchmarkData,
     geoRegions:          data.geoRegions,
-  })
+  }), [
+    data.reportMeta,
+    data.marketSizeData,
+    data.marketCapacityData,
+    data.sourcingFunnelData,
+    data.sourcingStats,
+    data.keyInsightsData,
+    data.salaryBenchmarkData,
+    data.geoRegions,
+  ])
   const prevHashRef = useRef(null)
 
   useEffect(() => {

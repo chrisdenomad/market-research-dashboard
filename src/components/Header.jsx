@@ -32,7 +32,7 @@ export default function Header({
         </div>
       </div>
 
-      <div className="header-right">
+      <div className="header-right no-pdf">
         <span className="prepared-by">
           Prepared by <strong>{reportMeta.preparedBy}</strong>
         </span>

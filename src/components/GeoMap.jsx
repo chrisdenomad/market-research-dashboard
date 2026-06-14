@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react'
 import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
 import { geoMercator, geoPath, geoBounds } from 'd3-geo'
 import { feature } from 'topojson-client'
@@ -51,6 +51,45 @@ function fitCountry(bounds, projection, containerW, containerH) {
   return { zoom, panX, panY }
 }
 
+// Memoised so country fills don't re-render on every pan/zoom mouse-move
+const CountryPaths = memo(function CountryPaths({ features, pathGenerator, activeCountry, activeCountryCodes, regions }) {
+  return features.map((feat) => {
+    const isActive   = activeCountryCodes?.has(String(feat.id))
+    const hasData    = regions.some((r) => r.countryCode === String(feat.id))
+    const isFaded    = activeCountry && !isActive
+
+    let fill   = 'var(--geo-land)'
+    let stroke = 'var(--geo-land-stroke)'
+    let opacity = 1
+
+    if (activeCountry) {
+      if (isActive) {
+        fill    = 'var(--accent)'
+        stroke  = 'var(--accent-light)'
+        opacity = 0.55
+      } else {
+        opacity = 0.2
+      }
+    } else if (hasData) {
+      fill    = 'var(--geo-land-data, #3d4f7c)'
+      stroke  = 'var(--accent)'
+      opacity = 0.5
+    }
+
+    return (
+      <path
+        key={feat.id}
+        d={pathGenerator(feat) || ''}
+        fill={fill}
+        stroke={stroke}
+        strokeWidth={isActive ? 1.5 : 0.6}
+        opacity={opacity}
+        style={{ transition: 'opacity 0.3s ease, fill 0.3s ease' }}
+      />
+    )
+  })
+})
+
 export default function GeoMap({ regions, selectedRegions, onRegionClick, activeCountry, countryBounds }) {
   const [worldData,  setWorldData]  = useState(null)
   const [loading,    setLoading]    = useState(true)
@@ -95,7 +134,7 @@ export default function GeoMap({ regions, selectedRegions, onRegionClick, active
   const projection    = useMemo(() => makeProjection(), [])
   const pathGenerator = useMemo(() => geoPath().projection(projection), [projection])
 
-  const maxSupply = Math.max(...regions.map((r) => r.supply), 1)
+  const maxSupply = regions.length ? Math.max(...regions.map((r) => r.supply), 1) : 1
 
   // Build a set of active country codes for fast lookup
   const activeCountryCodes = useMemo(() => {
@@ -248,44 +287,15 @@ export default function GeoMap({ regions, selectedRegions, onRegionClick, active
           })}
 
           {/* Country fills */}
-          {worldData && worldData.features.map((feat) => {
-            const isActive   = activeCountryCodes?.has(String(feat.id))
-            const hasData    = regions.some((r) => r.countryCode === String(feat.id))
-            const isFaded    = activeCountry && !isActive
-
-            // Color logic:
-            // - No country filter: data countries get a subtle tint, rest are plain land
-            // - Country filter active: highlighted country gets accent fill, others faded
-            let fill   = 'var(--geo-land)'
-            let stroke = 'var(--geo-land-stroke)'
-            let opacity = 1
-
-            if (activeCountry) {
-              if (isActive) {
-                fill    = 'var(--accent)'
-                stroke  = 'var(--accent-light)'
-                opacity = 0.55
-              } else {
-                opacity = 0.2
-              }
-            } else if (hasData) {
-              fill    = 'color-mix(in srgb, var(--geo-land) 60%, var(--accent) 40%)'
-              stroke  = 'var(--accent)'
-              opacity = 0.5
-            }
-
-            return (
-              <path
-                key={feat.id}
-                d={pathGenerator(feat) || ''}
-                fill={fill}
-                stroke={stroke}
-                strokeWidth={isActive ? 1.5 : 0.6}
-                opacity={opacity}
-                style={{ transition: 'opacity 0.3s ease, fill 0.3s ease' }}
-              />
-            )
-          })}
+          {worldData && (
+            <CountryPaths
+              features={worldData.features}
+              pathGenerator={pathGenerator}
+              activeCountry={activeCountry}
+              activeCountryCodes={activeCountryCodes}
+              regions={regions}
+            />
+          )}
 
           {/* Glow halos — only for visible regions */}
           {visibleRegions.map((region) => {
@@ -372,7 +382,7 @@ export default function GeoMap({ regions, selectedRegions, onRegionClick, active
             <div className="geo-tooltip-row"><span>Available</span><strong>{tooltip.region.available.toLocaleString()}</strong></div>
             <div className="geo-tooltip-row">
               <span>Avail. rate</span>
-              <strong>{Math.round((tooltip.region.available / tooltip.region.supply) * 100)}%</strong>
+              <strong>{tooltip.region.supply ? Math.round((tooltip.region.available / tooltip.region.supply) * 100) : 0}%</strong>
             </div>
             <div className="geo-tooltip-row"><span>Market share</span><strong>{tooltip.region.marketShare}%</strong></div>
             <div className="geo-tooltip-row">

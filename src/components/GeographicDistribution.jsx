@@ -73,7 +73,7 @@ export default function GeographicDistribution() {
     const headers = ['Region', 'Country', 'Zone', 'Supply', 'Available', 'Avail Rate %', 'Market Share %', 'YoY Change %']
     const rows = display.map((r) => [
       r.name, r.country, r.zone, r.supply, r.available,
-      Math.round((r.available / r.supply) * 100),
+      r.supply ? Math.round((r.available / r.supply) * 100) : 0,
       r.marketShare, r.yoyChange,
     ])
     const csv  = [headers, ...rows].map((row) => row.join(',')).join('\n')
@@ -137,21 +137,23 @@ export default function GeographicDistribution() {
       </div>
 
       {/* Filter bar */}
-      <RegionFilter
-        regions={regions}
-        selectedRegions={selectedRegions}
-        compareRegions={compareRegions}
-        onToggleRegion={handleToggleRegion}
-        onSelectAll={handleSelectAll}
-        onClearAll={handleClearAll}
-        onToggleCompare={handleToggleCompare}
-        compareMode={compareMode}
-        activeCountry={activeCountry}
-        onSetCountry={handleSetCountry}
-      />
+      <div className="no-pdf">
+        <RegionFilter
+          regions={regions}
+          selectedRegions={selectedRegions}
+          compareRegions={compareRegions}
+          onToggleRegion={handleToggleRegion}
+          onSelectAll={handleSelectAll}
+          onClearAll={handleClearAll}
+          onToggleCompare={handleToggleCompare}
+          compareMode={compareMode}
+          activeCountry={activeCountry}
+          onSetCountry={handleSetCountry}
+        />
+      </div>
 
       {/* Tab navigation */}
-      <div className="geo-tabs">
+      <div className="geo-tabs no-pdf">
         {TABS.map(({ id, label, Icon }) => (
           <button
             key={id}

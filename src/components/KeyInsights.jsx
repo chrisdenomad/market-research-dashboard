@@ -1,11 +1,11 @@
 import { useData } from '../context/DataContext'
 
 const tagStyles = {
-  Opportunity: { bg: 'rgba(16,185,129,0.12)', color: '#10b981', border: 'rgba(16,185,129,0.3)' },
-  Risk:        { bg: 'rgba(239,68,68,0.12)',  color: '#ef4444', border: 'rgba(239,68,68,0.3)' },
-  Trend:       { bg: 'rgba(99,102,241,0.12)', color: 'var(--accent-light)', border: 'rgba(99,102,241,0.3)' },
-  Watch:       { bg: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: 'rgba(245,158,11,0.3)' },
-  Note:        { bg: 'rgba(148,163,184,0.12)',color: 'var(--text-secondary)', border: 'rgba(148,163,184,0.3)' },
+  Opportunity: { bg: '#0d3327', color: '#10b981', border: '#10b981' },
+  Risk:        { bg: '#3b1212', color: '#ef4444', border: '#ef4444' },
+  Trend:       { bg: '#1e1f4a', color: 'var(--accent-light)', border: 'var(--accent)' },
+  Watch:       { bg: '#3b2a0a', color: '#f59e0b', border: '#f59e0b' },
+  Note:        { bg: '#1e2535', color: 'var(--text-secondary)', border: 'var(--border)' },
 }
 
 export default function KeyInsights() {

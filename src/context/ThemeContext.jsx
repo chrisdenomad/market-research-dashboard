@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { themes, defaultTheme } from '../themes/themes'
 
 const ACTIVE_KEY  = 'dashboard-theme'
@@ -19,6 +19,7 @@ export function ThemeProvider({ children }) {
   })
 
   // Apply CSS vars whenever active theme changes
+  const isMounted = useRef(false)
   useEffect(() => {
     const root = document.documentElement
     Object.entries(theme.vars).forEach(([key, val]) => {
@@ -33,7 +34,12 @@ export function ThemeProvider({ children }) {
       document.body.style.background = theme.vars['--bg-primary']
       document.body.style.backgroundAttachment = 'unset'
     }
-    localStorage.setItem(ACTIVE_KEY, theme.id)
+    // Only persist after the initial mount to avoid redundant writes
+    if (isMounted.current) {
+      localStorage.setItem(ACTIVE_KEY, theme.id)
+    } else {
+      isMounted.current = true
+    }
   }, [theme])
 
   // Switch active theme (temporary preview or selection)

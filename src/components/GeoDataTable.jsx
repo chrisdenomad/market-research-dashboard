@@ -60,7 +60,7 @@ export default function GeoDataTable({ regions, selectedRegions, onExport }) {
   return (
     <div className="geo-table-wrap">
       {/* Toolbar */}
-      <div className="geo-table-toolbar">
+      <div className="geo-table-toolbar no-pdf">
         <div className="geo-table-search">
           <Search size={13} />
           <input

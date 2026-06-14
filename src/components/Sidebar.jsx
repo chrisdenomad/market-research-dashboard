@@ -141,7 +141,7 @@ export default function Sidebar({ visibleWidgets = [], onOpenKeyModal, onManageW
       observers.push(obs)
     })
     return () => observers.forEach((o) => o.disconnect())
-  }, [visibleWidgets])
+  }, [navItems.map((n) => n.sectionId).join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const scrollTo = (sectionId) => {
     const el = document.getElementById(sectionId)
@@ -163,7 +163,7 @@ export default function Sidebar({ visibleWidgets = [], onOpenKeyModal, onManageW
         ))}
       </nav>
 
-      <div className="sidebar-bottom">
+        <div className="sidebar-bottom no-pdf">
         <div className="sidebar-footer">
           <p className="sidebar-footer-text">Talent Market Research Dashboard</p>
           <p className="sidebar-footer-text" style={{ opacity: 0.5 }}>v1.0</p>

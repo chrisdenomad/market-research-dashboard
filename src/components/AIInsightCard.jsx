@@ -89,7 +89,7 @@ export default function AIInsightCard({
             <p className="card-subtitle">7 key insights · market supply & hiring prediction</p>
           </div>
         </div>
-        <div className="ai-card-actions">
+        <div className="ai-card-actions no-pdf">
           <button className="ai-btn ai-btn-key" onClick={onOpenKeyModal} title="Configure GitHub token">
             <KeyRound size={13} /> AI Key
           </button>
@@ -97,7 +97,7 @@ export default function AIInsightCard({
       </div>
 
       {/* ── Mode tabs ───────────────────────────────────────────── */}
-      <div className="ai-mode-tabs">
+      <div className="ai-mode-tabs no-pdf">
         <button
           className={`ai-mode-tab ${isSummary ? 'active' : ''}`}
           onClick={() => onModeChange('summary')}
@@ -121,7 +121,7 @@ export default function AIInsightCard({
       ════════════════════════════════════════════════════════════ */}
       {isManual && (
         <div className="ai-mode-panel">
-          <div className="ai-prompt-section">
+          <div className="ai-prompt-section no-pdf">
             <label className="ai-prompt-label">
               Your prompt
               <span className="ai-prompt-hint">Ctrl+Enter to send</span>
@@ -201,7 +201,7 @@ export default function AIInsightCard({
       ════════════════════════════════════════════════════════════ */}
       {isSummary && (
         <div className="ai-mode-panel">
-          <div className="ai-prompt-section ai-prompt-section--compact">
+          <div className="ai-prompt-section ai-prompt-section--compact no-pdf">
             <label className="ai-prompt-label">
               Focus / instructions <span className="ai-prompt-optional">(optional)</span>
               <span className="ai-prompt-hint">Ctrl+Enter to generate</span>
@@ -252,7 +252,7 @@ export default function AIInsightCard({
             {!loading && !error && summary && (
               <>
                 <p className="ai-summary">{summary}</p>
-                <div className="ai-summary-footer">
+                <div className="ai-summary-footer no-pdf">
                   <button className="ai-btn ai-btn-regenerate" onClick={handleSummaryGenerate} title="Regenerate">
                     <RefreshCw size={12} /> Regenerate
                   </button>

@@ -28,7 +28,7 @@ export default function SortableWidget({ id, children, className = '', onEdit })
       className={`sortable-widget ${isDragging ? 'is-dragging' : ''} ${className}`}
     >
       {/* Controls — shown on hover: edit button + drag handle */}
-      <div className="widget-controls">
+      <div className="widget-controls no-pdf">
         {onEdit && (
           <button
             className="widget-edit-btn"

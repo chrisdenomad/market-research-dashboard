@@ -27,6 +27,7 @@ export const themes = [
       '--glass':           'none',
       '--sidebar-bg':      '#13151f',
       '--header-bg':       '#13151f',
+      '--geo-land-data':   '#2d3561',
     },
   },
   {
@@ -54,6 +55,7 @@ export const themes = [
       '--glass':           'none',
       '--sidebar-bg':      '#ffffff',
       '--header-bg':       '#ffffff',
+      '--geo-land-data':   '#b8cce8',
     },
   },
   {
@@ -81,6 +83,7 @@ export const themes = [
       '--glass':           'blur(12px)',
       '--sidebar-bg':      'rgba(15,12,41,0.85)',
       '--header-bg':       'rgba(15,12,41,0.9)',
+      '--geo-land-data':   '#3d2a6e',
     },
   },
   {
@@ -108,6 +111,7 @@ export const themes = [
       '--glass':           'none',
       '--sidebar-bg':      '#080c14',
       '--header-bg':       '#080c14',
+      '--geo-land-data':   '#0d3320',
     },
   },
   {
@@ -135,6 +139,7 @@ export const themes = [
       '--glass':           'none',
       '--sidebar-bg':      '#e2e8f0',
       '--header-bg':       '#ffffff',
+      '--geo-land-data':   '#fcd8b8',
     },
   },
 ]
