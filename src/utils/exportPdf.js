@@ -100,9 +100,6 @@ export async function exportDashboardPdf(reportMeta, onProgress) {
   const A4_H  = 1123
   const SCALE = 2   // html2canvas scale used above
 
-  // canvas.width  = root.offsetWidth  * SCALE
-  // canvas.height = root.offsetHeight * SCALE  (after we pinned it)
-  // imgH = how tall the full image is when fitted to A4_W
   const imgW = A4_W
   const imgH = Math.ceil((canvas.height / canvas.width) * imgW)
 
@@ -156,22 +153,21 @@ export async function exportDashboardPdf(reportMeta, onProgress) {
 
   // ── 8. Add internal links on every card-header ───────────────────────────────
   // Each link is an invisible clickable rectangle drawn over the header band.
-  // Clicking it jumps to the same section (page + Y position).
+  // Clicking it jumps to that section at the exact Y position on its page.
   sectionPdfPositions.forEach((sec) => {
     if (sec.pageNo >= pageIndex) return  // section beyond captured pages
 
-    // Go to the target page (1-based in jsPDF)
     pdf.setPage(sec.pageNo + 1)
 
-    // pdf.link(x, y, w, h, options)
-    // options.pageNumber = 1-based page to jump to
-    // options.magFactor = 'Fit' fits the whole page
+    // pdf.link(x, y, w, h, { pageNumber, y })
+    //   pageNumber — 1-based destination page
+    //   y (in opts) — destination Y offset from top of destination page (px)
     pdf.link(
-      0,           // x — start of header (full width)
-      sec.yOnPg,   // y — top of header on this page
-      sec.wImg,    // w — full header width
-      sec.hImg,    // h — header height
-      { pageNumber: sec.pageNo + 1 }
+      0,            // x — full-width header
+      sec.yOnPg,    // y — top of header on its page
+      sec.wImg,     // w — header width
+      sec.hImg,     // h — header height
+      { pageNumber: sec.pageNo + 1, y: sec.yOnPg }
     )
   })
 
@@ -182,7 +178,7 @@ export async function exportDashboardPdf(reportMeta, onProgress) {
     sectionPdfPositions.forEach((sec) => {
       if (sec.pageNo >= pageIndex) return
       try {
-        pdf.outline.add(null, sec.label, { pageNumber: sec.pageNo + 1 })
+        pdf.outline.add(null, sec.label, { pageNumber: sec.pageNo + 1, y: sec.yOnPg })
       } catch (_) { /* outline API may not be available in all jsPDF builds */ }
     })
   }

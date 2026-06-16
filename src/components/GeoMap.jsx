@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react'
 import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
-import { geoMercator, geoPath, geoBounds } from 'd3-geo'
+import { geoMercator, geoPath } from 'd3-geo'
 import { feature } from 'topojson-client'
 
 const SVG_W = 960
@@ -21,41 +21,13 @@ const SUPPLY_LEVEL_COLOR = (supply, max) => {
   return '#ef4444'
 }
 
-// Given a country bounding box (lng/lat), compute the zoom + pan
-// needed to fill an SVG_W × SVG_H canvas, with padding.
-function fitCountry(bounds, projection, containerW, containerH) {
-  const { minLng, maxLng, minLat, maxLat } = bounds
-  const PADDING = 40
-
-  const p1 = projection([minLng, maxLat]) // top-left in SVG
-  const p2 = projection([maxLng, minLat]) // bottom-right in SVG
-  if (!p1 || !p2) return null
-
-  const bW = Math.abs(p2[0] - p1[0])
-  const bH = Math.abs(p2[1] - p1[1])
-  if (bW === 0 || bH === 0) return null
-
-  // Scale to fill container with padding
-  const scaleX = (containerW - PADDING * 2) / bW
-  const scaleY = (containerH - PADDING * 2) / bH
-  const zoom = Math.min(scaleX, scaleY, 8)
-
-  // Center of the bounding box in SVG coords
-  const cx = (p1[0] + p2[0]) / 2
-  const cy = (p1[1] + p2[1]) / 2
-
-  // Pan so that center maps to middle of container
-  const panX = containerW / 2 - cx * zoom
-  const panY = containerH / 2 - cy * zoom
-
-  return { zoom, panX, panY }
-}
-
 // Memoised so country fills don't re-render on every pan/zoom mouse-move
 const CountryPaths = memo(function CountryPaths({ features, pathGenerator, activeCountry, activeCountryCodes, regions }) {
   return features.map((feat) => {
-    const isActive   = activeCountryCodes?.has(String(feat.id))
-    const hasData    = regions.some((r) => r.countryCode === String(feat.id))
+    // Normalize both sides: strip leading zeros so '036' === '36' === 36
+    const featIdStr = String(parseInt(feat.id, 10))
+    const isActive   = activeCountryCodes?.has(featIdStr)
+    const hasData    = regions.some((r) => String(parseInt(r.countryCode, 10)) === featIdStr)
     const isFaded    = activeCountry && !isActive
 
     let fill   = 'var(--geo-land)'
@@ -93,8 +65,9 @@ const CountryPaths = memo(function CountryPaths({ features, pathGenerator, activ
 export default function GeoMap({ regions, selectedRegions, onRegionClick, activeCountry, countryBounds }) {
   const [worldData,  setWorldData]  = useState(null)
   const [loading,    setLoading]    = useState(true)
-  const [zoom,       setZoom]       = useState(1)
-  const [pan,        setPan]        = useState({ x: 0, y: 0 })
+  // viewBox state: { x, y, w, h } — zoom/pan are expressed as viewBox changes
+  // so the SVG itself never scales outside its container (no clipping)
+  const [viewBox,    setViewBox]    = useState({ x: 0, y: 0, w: SVG_W, h: SVG_H })
   const [dragging,   setDragging]   = useState(false)
   const [dragStart,  setDragStart]  = useState(null)
   const [tooltip,    setTooltip]    = useState(null)
@@ -111,24 +84,40 @@ export default function GeoMap({ regions, selectedRegions, onRegionClick, active
       .catch(() => setLoading(false))
   }, [])
 
-  // Auto-zoom when activeCountry changes
+  // Auto-zoom when activeCountry changes — update viewBox to fit country bounds
   useEffect(() => {
-    if (!activeCountry || !countryBounds?.[activeCountry] || !containerRef.current) {
+    if (!activeCountry || !countryBounds?.[activeCountry]) {
       // Reset to full APAC view
-      setZoom(1)
-      setPan({ x: 0, y: 0 })
+      setViewBox({ x: 0, y: 0, w: SVG_W, h: SVG_H })
       return
     }
+    const proj = makeProjection()
+    const { minLng, maxLng, minLat, maxLat } = countryBounds[activeCountry]
+    const PADDING = 60
+    const p1 = proj([minLng, maxLat])
+    const p2 = proj([maxLng, minLat])
+    if (!p1 || !p2) return
+    const bW = Math.abs(p2[0] - p1[0])
+    const bH = Math.abs(p2[1] - p1[1])
+    if (bW === 0 || bH === 0) return
+    // Expand bounds by padding (in SVG units)
+    const cx = (p1[0] + p2[0]) / 2
+    const cy = (p1[1] + p2[1]) / 2
+    // Maintain aspect ratio of container
     const el = containerRef.current
-    const fit = fitCountry(
-      countryBounds[activeCountry],
-      makeProjection(),
-      el.offsetWidth,
-      el.offsetHeight,
-    )
-    if (!fit) return
-    setZoom(fit.zoom)
-    setPan({ x: fit.panX, y: fit.panY })
+    const aspect = el ? el.offsetWidth / el.offsetHeight : SVG_W / SVG_H
+    let vw = bW + PADDING * 2
+    let vh = vw / aspect
+    if (vh < bH + PADDING * 2) {
+      vh = bH + PADDING * 2
+      vw = vh * aspect
+    }
+    setViewBox({
+      x: cx - vw / 2,
+      y: cy - vh / 2,
+      w: vw,
+      h: vh,
+    })
   }, [activeCountry, countryBounds])
 
   const projection    = useMemo(() => makeProjection(), [])
@@ -136,49 +125,87 @@ export default function GeoMap({ regions, selectedRegions, onRegionClick, active
 
   const maxSupply = regions.length ? Math.max(...regions.map((r) => r.supply), 1) : 1
 
-  // Build a set of active country codes for fast lookup
+  // Build a set of active country codes for fast lookup (normalized — no leading zeros)
   const activeCountryCodes = useMemo(() => {
     if (!activeCountry) return null
     return new Set(
       regions
         .filter((r) => r.country === activeCountry)
-        .map((r) => r.countryCode)
+        .map((r) => String(parseInt(r.countryCode, 10)))
+        .filter((c) => c !== 'NaN')
     )
   }, [activeCountry, regions])
 
+  // Scale factor between current viewBox and the default full view
+  // Used to keep bubble sizes visually consistent regardless of zoom level
+  const viewScale = SVG_W / viewBox.w
+
   function bubbleRadius(supply) {
-    return 8 + (supply / maxSupply) * 26
+    const base = 8 + (supply / maxSupply) * 26
+    // Scale bubbles inversely so they don't grow huge when zoomed in
+    return base / Math.sqrt(viewScale)
   }
 
   function project(lng, lat) {
     return projection([lng, lat])
   }
 
-  // Zoom buttons
-  function handleZoomIn()  { setZoom((z) => Math.min(z + 0.4, 8)) }
-  function handleZoomOut() { setZoom((z) => Math.max(z - 0.4, 0.5)) }
-  function handleReset() {
-    setZoom(1)
-    setPan({ x: 0, y: 0 })
+  // Zoom via viewBox shrink/expand around its center
+  function zoomViewBox(factor) {
+    setViewBox((vb) => {
+      const newW = Math.min(Math.max(vb.w * factor, SVG_W / 8), SVG_W * 2)
+      const newH = Math.min(Math.max(vb.h * factor, SVG_H / 8), SVG_H * 2)
+      const cx = vb.x + vb.w / 2
+      const cy = vb.y + vb.h / 2
+      return { x: cx - newW / 2, y: cy - newH / 2, w: newW, h: newH }
+    })
   }
 
-  // Pan
+  function handleZoomIn()  { zoomViewBox(1 / 1.5) }
+  function handleZoomOut() { zoomViewBox(1.5) }
+  function handleReset()   { setViewBox({ x: 0, y: 0, w: SVG_W, h: SVG_H }) }
+
+  // Pan — convert mouse delta from screen pixels to SVG units
   function handleMouseDown(e) {
     setDragging(true)
-    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
+    setDragStart({ x: e.clientX, y: e.clientY, vb: viewBox })
   }
   function handleMouseMove(e) {
     if (!dragging || !dragStart) return
-    setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y })
+    const el = containerRef.current
+    if (!el) return
+    const scaleX = dragStart.vb.w / el.offsetWidth
+    const scaleY = dragStart.vb.h / el.offsetHeight
+    const dx = (e.clientX - dragStart.x) * scaleX
+    const dy = (e.clientY - dragStart.y) * scaleY
+    setViewBox({ ...dragStart.vb, x: dragStart.vb.x - dx, y: dragStart.vb.y - dy })
   }
   function handleMouseUp() { setDragging(false) }
 
-  // Wheel zoom — ref-callback pattern guarantees passive:false before any scroll event
+  // Wheel zoom — zoom toward the cursor position
   const wheelHandler = useCallback((e) => {
     e.preventDefault()
     e.stopPropagation()
-    const delta = e.deltaY > 0 ? -0.2 : 0.2
-    setZoom((z) => Math.min(Math.max(z + delta, 0.5), 8))
+    const factor = e.deltaY > 0 ? 1.25 : 0.8
+    const el = containerRef.current
+    if (!el) { zoomViewBox(factor); return }
+    const rect  = el.getBoundingClientRect()
+    setViewBox((vb) => {
+      const newW = Math.min(Math.max(vb.w * factor, SVG_W / 8), SVG_W * 2)
+      const newH = Math.min(Math.max(vb.h * factor, SVG_H / 8), SVG_H * 2)
+      // Cursor position in SVG coords
+      const mx = vb.x + ((e.clientX - rect.left) / rect.width)  * vb.w
+      const my = vb.y + ((e.clientY - rect.top)  / rect.height) * vb.h
+      // Keep cursor point stationary
+      const rx = (mx - vb.x) / vb.w
+      const ry = (my - vb.y) / vb.h
+      return {
+        x: mx - rx * newW,
+        y: my - ry * newH,
+        w: newW,
+        h: newH,
+      }
+    })
   }, [])
 
   const containerCallbackRef = useCallback((el) => {
@@ -254,19 +281,17 @@ export default function GeoMap({ regions, selectedRegions, onRegionClick, active
         )}
 
         <svg
-          viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+          viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
           preserveAspectRatio="xMidYMid meet"
           style={{
             width: '100%',
             height: '100%',
             display: 'block',
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transformOrigin: 'center center',
-            transition: dragging ? 'none' : 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
+            transition: dragging ? 'none' : 'viewBox 0.35s cubic-bezier(0.4,0,0.2,1)',
           }}
         >
-          {/* Ocean */}
-          <rect width={SVG_W} height={SVG_H} fill="var(--geo-ocean)" />
+          {/* Ocean — covers the entire SVG coordinate space generously */}
+          <rect x={-SVG_W} y={-SVG_H} width={SVG_W * 3} height={SVG_H * 3} fill="var(--geo-ocean)" />
 
           {/* Graticule */}
           {[-30, 0, 30].map((lat) => {
@@ -297,8 +322,9 @@ export default function GeoMap({ regions, selectedRegions, onRegionClick, active
             />
           )}
 
-          {/* Glow halos — only for visible regions */}
+          {/* Glow halos — only for visible regions with valid coordinates */}
           {visibleRegions.map((region) => {
+            if (!region.lat && !region.lng) return null   // skip stubs with no coords
             const pos = project(region.lng, region.lat)
             if (!pos) return null
             const isShown = selectedRegions.length === 0 || selectedRegions.includes(region.id)
@@ -313,6 +339,7 @@ export default function GeoMap({ regions, selectedRegions, onRegionClick, active
 
           {/* City bubbles */}
           {visibleRegions.map((region) => {
+            if (!region.lat && !region.lng) return null   // skip stubs with no coords
             const pos = project(region.lng, region.lat)
             if (!pos) return null
             const isShown  = selectedRegions.length === 0 || selectedRegions.includes(region.id)

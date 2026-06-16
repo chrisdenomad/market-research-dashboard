@@ -1,10 +1,110 @@
-import { Trash2, Plus } from 'lucide-react'
+import { useState } from 'react'
+import { Trash2, Plus, ChevronDown, ChevronUp, Search } from 'lucide-react'
 
 const ZONE_OPTIONS = ['Southeast Asia', 'East Asia', 'South Asia', 'Oceania', 'Other']
+
+// Common APAC countries with ISO numeric code + capital lat/lng for quick fill
+const COUNTRY_LOOKUP = [
+  { name: 'Vietnam',          code: '704', lat:  21.0285, lng: 105.8542, zone: 'Southeast Asia' },
+  { name: 'Singapore',        code: '702', lat:   1.3521, lng: 103.8198, zone: 'Southeast Asia' },
+  { name: 'Thailand',         code: '764', lat:  13.7563, lng: 100.5018, zone: 'Southeast Asia' },
+  { name: 'Indonesia',        code: '360', lat:  -6.2088, lng: 106.8456, zone: 'Southeast Asia' },
+  { name: 'Malaysia',         code: '458', lat:   3.1390, lng: 101.6869, zone: 'Southeast Asia' },
+  { name: 'Philippines',      code: '608', lat:  14.5995, lng: 120.9842, zone: 'Southeast Asia' },
+  { name: 'Myanmar',          code: '104', lat:  16.8661, lng:  96.1951, zone: 'Southeast Asia' },
+  { name: 'Cambodia',         code: '116', lat:  11.5564, lng: 104.9282, zone: 'Southeast Asia' },
+  { name: 'China',            code: '156', lat:  39.9042, lng: 116.4074, zone: 'East Asia'      },
+  { name: 'Japan',            code: '392', lat:  35.6762, lng: 139.6503, zone: 'East Asia'      },
+  { name: 'South Korea',      code: '410', lat:  37.5665, lng: 126.9780, zone: 'East Asia'      },
+  { name: 'Taiwan',           code: '158', lat:  25.0330, lng: 121.5654, zone: 'East Asia'      },
+  { name: 'Hong Kong SAR',    code: '344', lat:  22.3193, lng: 114.1694, zone: 'East Asia'      },
+  { name: 'India',            code: '356', lat:  28.6139, lng:  77.2090, zone: 'South Asia'     },
+  { name: 'Australia',        code: '036', lat: -33.8688, lng: 151.2093, zone: 'Oceania'        },
+  { name: 'New Zealand',      code: '554', lat: -36.8485, lng: 174.7633, zone: 'Oceania'        },
+]
+
+// Always-visible lookup panel (no internal toggle — parent controls visibility)
+function CountryLookup({ onSelect, onClose }) {
+  const [search, setSearch] = useState('')
+  const filtered = COUNTRY_LOOKUP.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  )
+  return (
+    <div className="geo-lookup-panel">
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
+        <Search size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+        <input
+          className="form-input"
+          placeholder="Search country…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          autoFocus
+          style={{ flex: 1 }}
+        />
+      </div>
+      <div className="geo-lookup-table-wrap">
+        <table className="geo-lookup-table">
+          <thead>
+            <tr>
+              <th>Country</th>
+              <th>ISO Code</th>
+              <th>Lat</th>
+              <th>Lng</th>
+              <th>Zone</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((c) => (
+              <tr key={c.code}>
+                <td>{c.name}</td>
+                <td><code>{c.code}</code></td>
+                <td>{c.lat}</td>
+                <td>{c.lng}</td>
+                <td>{c.zone}</td>
+                <td>
+                  <button
+                    type="button"
+                    className="geo-lookup-use-btn"
+                    onClick={() => { onSelect(c); onClose() }}
+                  >
+                    Use
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={6} style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 8 }}>
+                  No match
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--text-muted)' }}>
+        "Use" fills Country, ISO Code, Lat, Lng and Zone into this region row.
+      </p>
+    </div>
+  )
+}
 
 export default function GeoTab({ data, onChange, onBatch }) {
   const regions   = data.geoRegions   || []
   const trendData = data.geoTrendData || []
+  const [lookupTargetIdx, setLookupTargetIdx] = useState(null)
+
+  // Fill a region row from the lookup table
+  function fillFromLookup(i, entry) {
+    const next = regions.map((r, idx) =>
+      idx === i
+        ? { ...r, country: entry.name, countryCode: entry.code, lat: entry.lat, lng: entry.lng, zone: entry.zone }
+        : r
+    )
+    onChange('geoRegions', next)
+    setLookupTargetIdx(null)
+  }
 
   // ── Regions ────────────────────────────────────────────────────────────────
   function setRegionField(i, field, val) {
@@ -103,10 +203,30 @@ export default function GeoTab({ data, onChange, onBatch }) {
               <span className="form-card-title" style={{ color: r.color }}>
                 {r.name || `Region ${i + 1}`} · {r.country}
               </span>
-              <button className="row-delete-btn" onClick={() => removeRegion(i)} title="Remove region">
-                <Trash2 size={14} />
-              </button>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="geo-lookup-toggle"
+                  style={{ fontSize: 11, padding: '3px 8px' }}
+                  onClick={() => setLookupTargetIdx(lookupTargetIdx === i ? null : i)}
+                  title="Fill country code & coordinates from lookup"
+                >
+                  <Info size={12} />
+                  {lookupTargetIdx === i ? 'Close lookup' : 'Lookup country'}
+                </button>
+                <button className="row-delete-btn" onClick={() => removeRegion(i)} title="Remove region">
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
+
+            {/* Inline country lookup for this region */}
+            {lookupTargetIdx === i && (
+              <CountryLookup
+                onSelect={(entry) => fillFromLookup(i, entry)}
+                onClose={() => setLookupTargetIdx(null)}
+              />
+            )}
 
             {/* Row 1: id, name, country, countryCode, zone */}
             <div className="form-grid-2" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>

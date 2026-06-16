@@ -2,6 +2,8 @@ import { useData } from '../context/DataContext'
 
 export default function MarketRateBenchmark() {
   const { data } = useData()
+  const provided = data.providedSections
+  if (!provided || !provided.includes('rates')) return null
   const salaryBenchmarkData = data.salaryBenchmarkData || []
   const titles = data.widgetTitles || {}
   return (

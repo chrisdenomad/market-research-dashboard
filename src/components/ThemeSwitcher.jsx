@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown, Check, Palette } from 'lucide-react'
+import { ChevronDown, Check, Palette, Wand2 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 
-// Small color swatch per theme — matches each theme's accent
+// Small color swatch per built-in theme — matches each theme's accent
 const SWATCHES = {
   'executive-dark':  '#6366f1',
   'corporate-light': '#1e3a5f',
@@ -12,7 +12,7 @@ const SWATCHES = {
 }
 
 export default function ThemeSwitcher() {
-  const { theme, themes, setTheme } = useTheme()
+  const { theme, themes, customThemes = [], setTheme } = useTheme()
   const [open, setOpen] = useState(false)
   const containerRef = useRef(null)
 
@@ -50,8 +50,8 @@ export default function ThemeSwitcher() {
         aria-expanded={open}
         title="Change theme"
       >
-        <Palette size={13} />
-        <span className="theme-dropdown-label">{theme.label}</span>
+        {theme.isCustom ? <Wand2 size={13} /> : <Palette size={13} />}
+        <span className="theme-dropdown-label">{theme.label ?? theme.name}</span>
         <ChevronDown
           size={13}
           className={`theme-chevron ${open ? 'open' : ''}`}
@@ -72,7 +72,12 @@ export default function ThemeSwitcher() {
                 className="theme-swatch"
                 style={{ background: SWATCHES[t.id] ?? t.vars?.['--accent'] ?? '#6366f1' }}
               />
-              <span className="theme-dropdown-item-label">{t.name}</span>
+              <span className="theme-dropdown-item-label">
+                {t.name}
+                {t.isCustom && (
+                  <span style={{ fontSize: 9, opacity: 0.7, marginLeft: 4 }}>custom</span>
+                )}
+              </span>
               {theme.id === t.id && <Check size={12} className="theme-check" />}
             </button>
           ))}

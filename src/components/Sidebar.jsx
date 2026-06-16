@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
-import { Settings, KeyRound, LayoutDashboard, Palette, Check, Star } from 'lucide-react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
+import { Settings, KeyRound, LayoutDashboard, Palette, Check, Star, Wand2 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
+
+const CustomThemeBuilder = lazy(() => import('./CustomThemeBuilder'))
 
 // Maps widget id → sidebar section element id + label
 const WIDGET_NAV = {
@@ -24,8 +26,8 @@ const SWATCHES = {
 }
 
 // ── Settings flyout panel ─────────────────────────────────────────────────────
-function SettingsPanel({ onOpenKeyModal, onManageWidgets, onClose }) {
-  const { theme, themes, setTheme, defaultThemeId, setDefaultTheme } = useTheme()
+function SettingsPanel({ onOpenKeyModal, onManageWidgets, onOpenThemeBuilder, onClose }) {
+  const { theme, themes, setTheme, defaultThemeId, setDefaultTheme, customThemes } = useTheme()
   const panelRef = useRef(null)
 
   // Close on outside click
@@ -74,6 +76,23 @@ function SettingsPanel({ onOpenKeyModal, onManageWidgets, onClose }) {
         </div>
       </button>
 
+      {/* Custom Theme Builder */}
+      <button
+        className="settings-item"
+        onClick={() => { onOpenThemeBuilder(); onClose() }}
+      >
+        <Wand2 size={18} />
+        <div className="settings-item-text">
+          <span className="settings-item-label">Custom Theme</span>
+          <span className="settings-item-desc">
+            Build your own color scheme
+            {customThemes.length > 0 && (
+              <span className="settings-item-badge">{customThemes.length} saved</span>
+            )}
+          </span>
+        </div>
+      </button>
+
       {/* Theme picker */}
       <div className="settings-divider" />
       <p className="settings-section-label">Theme</p>
@@ -119,8 +138,9 @@ function SettingsPanel({ onOpenKeyModal, onManageWidgets, onClose }) {
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 export default function Sidebar({ visibleWidgets = [], onOpenKeyModal, onManageWidgets }) {
-  const [active, setActive]           = useState(null)
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [active, setActive]                   = useState(null)
+  const [settingsOpen, setSettingsOpen]       = useState(false)
+  const [themeBuilderOpen, setThemeBuilderOpen] = useState(false)
 
   // Build ordered nav items from the live visible widget order
   const navItems = visibleWidgets
@@ -175,6 +195,7 @@ export default function Sidebar({ visibleWidgets = [], onOpenKeyModal, onManageW
             <SettingsPanel
               onOpenKeyModal={onOpenKeyModal}
               onManageWidgets={onManageWidgets}
+              onOpenThemeBuilder={() => setThemeBuilderOpen(true)}
               onClose={() => setSettingsOpen(false)}
             />
           )}
@@ -187,6 +208,13 @@ export default function Sidebar({ visibleWidgets = [], onOpenKeyModal, onManageW
           </button>
         </div>
       </div>
+
+      {/* Custom Theme Builder modal (lazy) */}
+      {themeBuilderOpen && (
+        <Suspense fallback={null}>
+          <CustomThemeBuilder onClose={() => setThemeBuilderOpen(false)} />
+        </Suspense>
+      )}
     </aside>
   )
 }

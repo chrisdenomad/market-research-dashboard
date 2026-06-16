@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, memo } from 'react'
+import { useState, lazy, Suspense, memo, useEffect, useRef } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -108,11 +108,65 @@ function loadHiddenWidgets() {
   return []
 }
 
+// ── Change Toast ────────────────────────────────────────────────────────────
+const TOAST_DURATION = 5000 // ms
+
+function ChangeToast({ message, onUndo, onDismiss }) {
+  const [progress, setProgress] = useState(100)
+  const startRef  = useRef(Date.now())
+  const frameRef  = useRef(null)
+  const dismissed = useRef(false)
+
+  useEffect(() => {
+    function tick() {
+      const elapsed = Date.now() - startRef.current
+      const pct = Math.max(0, 100 - (elapsed / TOAST_DURATION) * 100)
+      setProgress(pct)
+      if (pct > 0) {
+        frameRef.current = requestAnimationFrame(tick)
+      } else if (!dismissed.current) {
+        dismissed.current = true
+        onDismiss()
+      }
+    }
+    frameRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frameRef.current)
+  }, [onDismiss])
+
+  function handleUndo() {
+    dismissed.current = true
+    cancelAnimationFrame(frameRef.current)
+    onUndo()
+    onDismiss()
+  }
+
+  function handleDismiss() {
+    dismissed.current = true
+    cancelAnimationFrame(frameRef.current)
+    onDismiss()
+  }
+
+  return (
+    <div className="change-toast" role="status" aria-live="polite">
+      <div className="change-toast-body">
+        <span className="change-toast-icon">✓</span>
+        <span className="change-toast-msg">{message}</span>
+        <button className="change-toast-undo" onClick={handleUndo}>Undo</button>
+        <button className="change-toast-close" onClick={handleDismiss} aria-label="Dismiss">✕</button>
+      </div>
+      <div className="change-toast-bar" style={{ width: `${progress}%` }} />
+    </div>
+  )
+}
+
 // ── Widget content renderer ─────────────────────────────────────
 const WidgetContent = memo(function WidgetContent({ id, data, summary, loading, error, generate, hasKey, customInstruction, updateInstruction, mode, setMode, manualOutput, manualLoading, manualError, generateManual, onOpenKeyModal }) {
   const sectionId = SECTION_IDS[id]
+  const provided  = data.providedSections
+
   switch (id) {
     case 'ai-overview':
+      // AI Overview always shows (it works with or without data; key required for generation)
       return (
         <section className="section" id={sectionId}>
           <AIInsightCard
@@ -132,6 +186,7 @@ const WidgetContent = memo(function WidgetContent({ id, data, summary, loading, 
         </section>
       )
     case 'kpi':
+      if (!provided || !provided.includes('report')) return null
       return (
         <section id={sectionId} className="section">
           <div className="kpi-grid">
@@ -159,7 +214,7 @@ const WidgetContent = memo(function WidgetContent({ id, data, summary, loading, 
 })
 
 function Dashboard() {
-  const { data } = useData()
+  const { data, undoData, canUndo } = useData()
   const [modalOpen,       setModalOpen]       = useState(false)
   const [editSection,     setEditSection]     = useState(null)
   const [keyModalOpen,    setKeyModalOpen]    = useState(false)
@@ -168,6 +223,16 @@ function Dashboard() {
   const [widgetOrder,     setWidgetOrder]     = useState(loadWidgetOrder)
   const [hiddenWidgets,   setHiddenWidgets]   = useState(loadHiddenWidgets)
   const [activeId,        setActiveId]        = useState(null)
+  const [toast,           setToast]           = useState(null)  // { message }
+
+  // Show toast whenever data is applied (canUndo flips to true means a save just happened)
+  const prevCanUndo = useRef(false)
+  useEffect(() => {
+    if (canUndo && !prevCanUndo.current) {
+      setToast({ message: 'Changes saved to dashboard' })
+    }
+    prevCanUndo.current = canUndo
+  }, [canUndo])
 
   const {
     summary, loading, error, generate,
@@ -321,6 +386,15 @@ function Dashboard() {
             <span>{pdfStatus}</span>
           </div>
         </div>
+      )}
+
+      {/* Change saved toast */}
+      {toast && (
+        <ChangeToast
+          message={toast.message}
+          onUndo={() => { undoData(); setToast(null) }}
+          onDismiss={() => setToast(null)}
+        />
       )}
     </div>
   )

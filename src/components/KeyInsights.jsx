@@ -10,6 +10,8 @@ const tagStyles = {
 
 export default function KeyInsights() {
   const { data } = useData()
+  const provided = data.providedSections
+  if (!provided || !provided.includes('insights')) return null
   const keyInsightsData = data.keyInsightsData || []
   return (
     <div className="card" id="insights">

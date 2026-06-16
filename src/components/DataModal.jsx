@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { X, Upload, Download, RotateCcw, Check, ChevronDown, ChevronRight, Trash2, Plus } from 'lucide-react'
+import { X, Upload, Download, RotateCcw, Check, ChevronDown, ChevronRight, Trash2, Plus, Search } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { parseExcelFile } from '../hooks/useExcelImport'
 import { downloadExcelTemplate } from '../utils/excelTemplate'
@@ -10,6 +10,80 @@ const ICON_OPTIONS  = ['users', 'userCheck', 'mapPin', 'clock']
 const TAG_OPTIONS   = ['Opportunity', 'Risk', 'Trend', 'Watch', 'Note']
 const ZONE_OPTIONS  = ['Southeast Asia', 'East Asia', 'South Asia', 'Oceania', 'Other']
 const BASIS_OPTIONS = ['Monthly', 'Yearly', 'Hourly', 'Daily']
+
+// APAC country quick-fill lookup
+const COUNTRY_LOOKUP = [
+  { name: 'Vietnam',       code: '704', lat:  21.0285, lng: 105.8542, zone: 'Southeast Asia' },
+  { name: 'Singapore',     code: '702', lat:   1.3521, lng: 103.8198, zone: 'Southeast Asia' },
+  { name: 'Thailand',      code: '764', lat:  13.7563, lng: 100.5018, zone: 'Southeast Asia' },
+  { name: 'Indonesia',     code: '360', lat:  -6.2088, lng: 106.8456, zone: 'Southeast Asia' },
+  { name: 'Malaysia',      code: '458', lat:   3.1390, lng: 101.6869, zone: 'Southeast Asia' },
+  { name: 'Philippines',   code: '608', lat:  14.5995, lng: 120.9842, zone: 'Southeast Asia' },
+  { name: 'Myanmar',       code: '104', lat:  16.8661, lng:  96.1951, zone: 'Southeast Asia' },
+  { name: 'Cambodia',      code: '116', lat:  11.5564, lng: 104.9282, zone: 'Southeast Asia' },
+  { name: 'China',         code: '156', lat:  39.9042, lng: 116.4074, zone: 'East Asia'      },
+  { name: 'Japan',         code: '392', lat:  35.6762, lng: 139.6503, zone: 'East Asia'      },
+  { name: 'South Korea',   code: '410', lat:  37.5665, lng: 126.9780, zone: 'East Asia'      },
+  { name: 'Taiwan',        code: '158', lat:  25.0330, lng: 121.5654, zone: 'East Asia'      },
+  { name: 'Hong Kong SAR', code: '344', lat:  22.3193, lng: 114.1694, zone: 'East Asia'      },
+  { name: 'India',         code: '356', lat:  28.6139, lng:  77.2090, zone: 'South Asia'     },
+  { name: 'Australia',     code: '036', lat: -33.8688, lng: 151.2093, zone: 'Oceania'        },
+  { name: 'New Zealand',   code: '554', lat: -36.8485, lng: 174.7633, zone: 'Oceania'        },
+]
+
+function CountryLookupPanel({ onSelect, onClose }) {
+  const [search, setSearch] = useState('')
+  const filtered = COUNTRY_LOOKUP.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  )
+  return (
+    <div className="geo-lookup-panel">
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
+        <Search size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+        <input
+          className="form-input"
+          placeholder="Search country…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          autoFocus
+          style={{ flex: 1 }}
+        />
+      </div>
+      <div className="geo-lookup-table-wrap">
+        <table className="geo-lookup-table">
+          <thead>
+            <tr>
+              <th>Country</th><th>ISO Code</th><th>Lat</th><th>Lng</th><th>Zone</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((c) => (
+              <tr key={c.code}>
+                <td>{c.name}</td>
+                <td><code>{c.code}</code></td>
+                <td>{c.lat}</td>
+                <td>{c.lng}</td>
+                <td>{c.zone}</td>
+                <td>
+                  <button type="button" className="geo-lookup-use-btn"
+                    onClick={() => { onSelect(c); onClose() }}>
+                    Use
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr><td colSpan={6} style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 8 }}>No match</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p style={{ margin: '5px 0 0', fontSize: 10, color: 'var(--text-muted)' }}>
+        "Use" fills Country, ISO Code, Lat, Lng and Zone into this region.
+      </p>
+    </div>
+  )
+}
 
 const SECTIONS = [
   { id: 'report',      label: 'Report & Metrics',   desc: 'Title, role, date, and key metric cards'          },
@@ -40,6 +114,18 @@ function AccordionSection({ id, label, desc, open, onToggle, children }) {
   )
 }
 
+// Map data keys → section ids so patch() can auto-mark sections as edited
+const KEY_TO_SECTION = {
+  reportMeta: 'report', widgetTitles: 'report', kpiData: 'report',
+  marketSizeData: 'marketsize',
+  marketCapacityData: 'capacity',
+  sourcingFunnelData: 'sourcing', sourcingStats: 'sourcing',
+  keyInsightsData: 'insights',
+  salaryBenchmarkData: 'rates',
+  geoRegions: 'geo', geoTrendData: 'geo', countryBounds: 'geo',
+  methodologyData: 'methodology',
+}
+
 // ── Main Modal ───────────────────────────────────────────────────────────────
 export default function DataModal({ onClose, initialSection }) {
   const { data, applyData, resetData } = useData()
@@ -48,27 +134,45 @@ export default function DataModal({ onClose, initialSection }) {
     report: !initialSection || initialSection === 'report',
     ...(initialSection && initialSection !== 'report' ? { [initialSection]: true } : {}),
   }))
+  // Track which sections the user has explicitly edited / opened for editing
+  const [editedSections, setEditedSections] = useState(() => new Set(data.providedSections || []))
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState(null)
   const fileRef = useRef()
 
   function patch(key, value) {
     setFormData((prev) => ({ ...prev, [key]: value }))
+    // Auto-mark the section as edited whenever any field changes
+    const sectionId = KEY_TO_SECTION[key]
+    if (sectionId) markEdited(sectionId)
   }
 
   function patchBatch(patches) {
     setFormData((prev) => ({ ...prev, ...patches }))
+    // Mark all affected sections
+    Object.keys(patches).forEach((key) => {
+      const sectionId = KEY_TO_SECTION[key]
+      if (sectionId) markEdited(sectionId)
+    })
   }
 
   function toggleSection(id) {
     setOpen((prev) => ({ ...prev, [id]: !prev[id] }))
+    // Mark as edited when the user opens a section (they can see and intend to use it)
+    markEdited(id)
+  }
+
+  // Mark a section as explicitly edited by the user
+  function markEdited(sectionId) {
+    setEditedSections((prev) => new Set([...prev, sectionId]))
   }
 
   function expandAll()   { setOpen(Object.fromEntries(SECTIONS.map((s) => [s.id, true]))) }
   function collapseAll() { setOpen({}) }
 
   function handleApply() {
-    applyData(formData)
+    const sections = [...editedSections]
+    applyData(formData, sections)
     onClose()
   }
 
@@ -84,6 +188,18 @@ export default function DataModal({ onClose, initialSection }) {
     setImportMsg(null)
     try {
       const parsed = await parseExcelFile(file)
+
+      // Determine which sections the Excel file contained — do this BEFORE setFormData
+      const importedSections = []
+      if (parsed.reportMeta || parsed.kpiData)                                                       importedSections.push('report')
+      if (parsed.marketSizeData)                                                                      importedSections.push('marketsize')
+      if (parsed.marketCapacityData)                                                                  importedSections.push('capacity')
+      if (parsed.sourcingFunnelData || parsed.sourcingStats)                                         importedSections.push('sourcing')
+      if (parsed.salaryBenchmarkData)                                                                 importedSections.push('rates')
+      if (parsed.keyInsightsData)                                                                     importedSections.push('insights')
+      if (parsed.geoRegions || parsed.geoTrendData)                                                  importedSections.push('geo')
+      if (parsed.methodologyCriteria || parsed.methodologySources || parsed.disclaimers)             importedSections.push('methodology')
+
       setFormData((prev) => {
         const next = { ...prev }
         if (parsed.reportMeta)          next.reportMeta          = parsed.reportMeta
@@ -105,6 +221,9 @@ export default function DataModal({ onClose, initialSection }) {
         }
         return next
       })
+
+      // Mark all imported sections as edited so Apply will include them
+      setEditedSections((prev) => new Set([...prev, ...importedSections]))
       setImportMsg({ type: 'success', text: `"${file.name}" imported — review and click Apply.` })
     } catch (err) {
       setImportMsg({ type: 'error', text: `Import failed: ${err.message}` })
@@ -599,6 +718,16 @@ function GeoSection({ formData, patch, patchBatch }) {
   const regions   = formData.geoRegions   || []
   const trendData = formData.geoTrendData || []
   const geoColors = ['#6366f1','#8b5cf6','#a78bfa','#c4b5fd','#7c3aed','#4f46e5','#818cf8','#6d28d9']
+  const [lookupIdx, setLookupIdx] = useState(null)
+
+  function fillFromLookup(i, entry) {
+    patch('geoRegions', regions.map((r, idx) =>
+      idx === i
+        ? { ...r, country: entry.name, countryCode: entry.code, lat: entry.lat, lng: entry.lng, zone: entry.zone }
+        : r
+    ))
+    setLookupIdx(null)
+  }
 
   function setRegionField(i, field, val) {
     const numFields = ['supply', 'available', 'lat', 'lng', 'yoyChange', 'marketShare']
@@ -652,11 +781,31 @@ function GeoSection({ formData, patch, patchBatch }) {
       <div className="sub-section">
         <p className="sub-section-title">City Nodes</p>
         {regions.map((r, i) => (
-          <div key={i} className="form-card" style={{ borderLeft: `3px solid ${r.color || '#6366f1'}`, marginBottom: 10 }}>
+           <div key={i} className="form-card" style={{ borderLeft: `3px solid ${r.color || '#6366f1'}`, marginBottom: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <span className="form-card-title" style={{ color: r.color }}>{r.name || `Region ${i + 1}`} · {r.country}</span>
-              <button className="row-delete-btn" onClick={() => removeRegion(i)}><Trash2 size={14}/></button>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="geo-lookup-toggle"
+                  style={{ fontSize: 11, padding: '3px 8px' }}
+                  onClick={() => setLookupIdx(lookupIdx === i ? null : i)}
+                  title="Fill country code & coordinates from lookup"
+                >
+                  <Search size={12} />
+                  {lookupIdx === i ? 'Close' : 'Lookup country'}
+                </button>
+                <button className="row-delete-btn" onClick={() => removeRegion(i)}><Trash2 size={14}/></button>
+              </div>
             </div>
+
+            {/* Inline country lookup */}
+            {lookupIdx === i && (
+              <CountryLookupPanel
+                onSelect={(entry) => fillFromLookup(i, entry)}
+                onClose={() => setLookupIdx(null)}
+              />
+            )}
             <div className="form-grid-3">
               <div className="form-row">
                 <label className="form-label">ID (short key)</label>

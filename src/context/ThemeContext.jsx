@@ -1,16 +1,30 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import { themes, defaultTheme } from '../themes/themes'
 
-const ACTIVE_KEY  = 'dashboard-theme'
-const DEFAULT_KEY = 'dashboard-theme-default'
+const ACTIVE_KEY       = 'dashboard-theme'
+const DEFAULT_KEY      = 'dashboard-theme-default'
+const CUSTOM_KEY       = 'dashboard-custom-themes'
 
 const ThemeContext = createContext(null)
 
 export function ThemeProvider({ children }) {
+  // User-created custom themes (persisted to localStorage)
+  const [customThemes, setCustomThemes] = useState(() => {
+    try {
+      const raw = localStorage.getItem(CUSTOM_KEY)
+      return raw ? JSON.parse(raw) : []
+    } catch {
+      return []
+    }
+  })
+
+  // All available themes = built-in + custom
+  const allThemes = [...themes, ...customThemes]
+
   // The currently displayed theme
   const [theme, setThemeState] = useState(() => {
     const saved = localStorage.getItem(ACTIVE_KEY)
-    return themes.find((t) => t.id === saved) || defaultTheme
+    return allThemes.find((t) => t.id === saved) || defaultTheme
   })
 
   // The user-pinned default theme (loaded on fresh page load)
@@ -55,8 +69,40 @@ export function ThemeProvider({ children }) {
     setTheme(t)
   }
 
+  // Add a new custom theme and persist it
+  const addCustomTheme = useCallback((newTheme) => {
+    setCustomThemes((prev) => {
+      // Replace if same id exists, otherwise append
+      const filtered = prev.filter((t) => t.id !== newTheme.id)
+      const next = [...filtered, newTheme]
+      localStorage.setItem(CUSTOM_KEY, JSON.stringify(next))
+      return next
+    })
+  }, [])
+
+  // Remove a custom theme by id
+  const removeCustomTheme = useCallback((id) => {
+    setCustomThemes((prev) => {
+      const next = prev.filter((t) => t.id !== id)
+      localStorage.setItem(CUSTOM_KEY, JSON.stringify(next))
+      return next
+    })
+    // If the deleted theme was active, fall back to default
+    setThemeState((prev) => (prev.id === id ? defaultTheme : prev))
+  }, [])
+
   return (
-    <ThemeContext.Provider value={{ theme, themes, setTheme, defaultThemeId, setDefaultTheme }}>
+    <ThemeContext.Provider value={{
+      theme,
+      themes: allThemes,
+      builtinThemes: themes,
+      customThemes,
+      setTheme,
+      defaultThemeId,
+      setDefaultTheme,
+      addCustomTheme,
+      removeCustomTheme,
+    }}>
       {children}
     </ThemeContext.Provider>
   )

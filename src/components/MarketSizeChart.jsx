@@ -19,6 +19,8 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function MarketSizeChart() {
   const { data } = useData()
+  const provided = data.providedSections
+  if (!provided || !provided.includes('marketsize')) return null
   const marketSizeData = data.marketSizeData || []
   const disclaimers    = data.methodologyData?.disclaimers || []
   const titles         = data.widgetTitles || {}

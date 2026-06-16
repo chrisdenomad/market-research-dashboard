@@ -3,6 +3,8 @@ import { AlertCircle } from 'lucide-react'
 
 export default function SearchMethodology() {
   const { data } = useData()
+  const provided = data.providedSections
+  if (!provided || !provided.includes('methodology')) return null
   const methodologyData = data.methodologyData || { criteria: [], sources: [], disclaimers: [] }
   const titles = data.widgetTitles || {}
   return (

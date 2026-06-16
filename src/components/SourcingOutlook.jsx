@@ -2,6 +2,8 @@ import { useData } from '../context/DataContext'
 
 export default function SourcingOutlook() {
   const { data } = useData()
+  const provided = data.providedSections
+  if (!provided || !provided.includes('sourcing')) return null
   const sourcingFunnelData = data.sourcingFunnelData || []
   const sourcingStats      = data.sourcingStats      || []
   const disclaimers        = data.methodologyData?.disclaimers || []

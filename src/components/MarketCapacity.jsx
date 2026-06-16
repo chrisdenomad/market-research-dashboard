@@ -17,6 +17,8 @@ const CustomTooltip = ({ active, payload }) => {
 
 export default function MarketCapacity() {
   const { data } = useData()
+  const provided = data.providedSections
+  if (!provided || !provided.includes('capacity')) return null
   const marketCapacityData = data.marketCapacityData || []
   const max = marketCapacityData[0]?.value || 1
   const chartData = marketCapacityData.map((d) => ({ ...d, fill: d.color }))

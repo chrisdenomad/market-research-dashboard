@@ -18,13 +18,53 @@ export default function GeographicDistribution() {
   const { data } = useData()
   const regions      = data.geoRegions    || []
   const trendData    = data.geoTrendData  || []
-  const countryBounds= data.countryBounds || {}
+  const rawBounds    = data.countryBounds || {}
+
+  // Auto-fill missing countryBounds from the lat/lng of each region
+  // so newly added countries (e.g. Vietnam) auto-zoom without manual bounds entry
+  const countryBounds = (() => {
+    const derived = { ...rawBounds }
+    regions.forEach((r) => {
+      if (!r.country || !r.lat || !r.lng) return
+      if (derived[r.country]) return  // already defined — don't overwrite explicit bounds
+      derived[r.country] = {
+        minLng: r.lng - 2,
+        maxLng: r.lng + 2,
+        minLat: r.lat - 2,
+        maxLat: r.lat + 2,
+      }
+    })
+    // Merge regions of the same country to a single tight bounding box
+    const byCountry = {}
+    regions.forEach((r) => {
+      if (!r.country || !r.lat || !r.lng) return
+      if (!byCountry[r.country]) byCountry[r.country] = []
+      byCountry[r.country].push(r)
+    })
+    Object.entries(byCountry).forEach(([country, rs]) => {
+      if (rawBounds[country]) return  // keep explicit bounds as-is
+      const lats = rs.map((r) => r.lat)
+      const lngs = rs.map((r) => r.lng)
+      const PADDING = 2
+      derived[country] = {
+        minLng: Math.min(...lngs) - PADDING,
+        maxLng: Math.max(...lngs) + PADDING,
+        minLat: Math.min(...lats) - PADDING,
+        maxLat: Math.max(...lats) + PADDING,
+      }
+    })
+    return derived
+  })()
 
   const [activeTab,       setActiveTab]       = useState('map')
-  const [selectedRegions, setSelectedRegions] = useState([])  // [] = all shown
+  const [selectedRegions, setSelectedRegions] = useState([])
   const [compareRegions,  setCompareRegions]  = useState([])
   const [compareMode,     setCompareMode]     = useState(false)
-  const [activeCountry,   setActiveCountry]   = useState(null) // null = all countries
+  const [activeCountry,   setActiveCountry]   = useState(null)
+
+  // Guard AFTER all hooks — never call hooks conditionally
+  const provided = data.providedSections
+  if (!provided || !provided.includes('marketsize')) return null
 
   // ── Country filter ──────────────────────────────────────────
   function handleSetCountry(country) {
