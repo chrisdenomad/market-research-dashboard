@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, KeyRound, Eye, EyeOff, Check } from 'lucide-react'
+import { X, KeyRound, Eye, EyeOff, Check, ShieldCheck } from 'lucide-react'
 
 // GitHub PATs: classic start with "ghp_", fine-grained start with "github_pat_"
 function isValidToken(t) {
@@ -11,6 +11,8 @@ export default function APIKeyModal({ currentKey, onSave, onClose }) {
   const [key,     setKey]     = useState(currentKey || '')
   const [visible, setVisible] = useState(false)
   const [saved,   setSaved]   = useState(false)
+
+  const hasExistingKey = !!currentKey
 
   function handleSave() {
     onSave(key.trim())
@@ -49,6 +51,11 @@ export default function APIKeyModal({ currentKey, onSave, onClose }) {
         <div className="modal-body" style={{ padding: '20px 24px' }}>
 
           <div className="api-key-info-box">
+            {hasExistingKey && (
+              <p className="api-key-saved-status">
+                <ShieldCheck size={14} /> Token already saved in your browser — AI will auto-load on every visit.
+              </p>
+            )}
             <p className="api-key-info-title">How to get a GitHub token for AI Models</p>
             <ol className="api-key-steps">
               <li>Go to <strong>github.com/settings/tokens</strong> and sign in</li>

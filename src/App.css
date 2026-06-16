@@ -559,6 +559,19 @@
   color: var(--chart-4);
 }
 
+.api-key-saved-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    CSS VARIABLES — set by ThemeContext on :root
    All components reference these variables for full theme support

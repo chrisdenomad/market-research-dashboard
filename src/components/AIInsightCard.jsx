@@ -75,8 +75,8 @@ export default function AIInsightCard({
   // ── Friendly errors ──────────────────────────────────────────
   const manualFriendlyError  = manualError  ? (MANUAL_ERRORS[manualError]  || `AI error: ${manualError}`)  : null
   const summaryFriendlyError = error        ? (TOKEN_ERRORS[error]         || `AI error: ${error}`)        : null
-  const manualNeedsKey  = manualError  === 'no-key'
-  const summaryNeedsKey = error        === 'no-key'
+  const manualNeedsKey  = manualError  === 'no-key' && !hasKey
+  const summaryNeedsKey = error        === 'no-key' && !hasKey
 
   return (
     <div className="card ai-insight-card">

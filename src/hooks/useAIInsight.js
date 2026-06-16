@@ -253,7 +253,22 @@ export function useAIInsight(data) {
   ])
   const prevHashRef = useRef(null)
 
+  // On mount: if a key is already saved, auto-generate immediately
+  const hasMountedRef = useRef(false)
   useEffect(() => {
+    if (hasMountedRef.current) return
+    hasMountedRef.current = true
+    if (apiKey) {
+      prevHashRef.current = dataHash
+      generate(apiKey)
+    } else {
+      setError('no-key')
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-generate when data changes (but not on first mount — handled above)
+  useEffect(() => {
+    if (!hasMountedRef.current) return
     if (!apiKey) { setError('no-key'); return }
     if (prevHashRef.current === dataHash) return
     prevHashRef.current = dataHash
