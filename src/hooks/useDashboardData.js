@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import * as mockData from '../data/mockData'
 
 const STORAGE_KEY = 'dashboard-data-v3'
@@ -221,24 +221,32 @@ export function useDashboardData() {
 
   // Keep one snapshot for undo (null = nothing to undo)
   const [prevData, setPrevData] = useState(null)
+  // Incremented on every applyData call — lets consumers detect each save event
+  const [saveCount, setSaveCount] = useState(0)
+
+  // Ref that always holds the latest data so applyData can snapshot it
+  // without nesting setPrevData inside setData's updater (a React anti-pattern).
+  const dataRef = useRef(data)
+  dataRef.current = data
 
   // applyData: called from DataModal (Apply button) or Excel import.
   const applyData = useCallback((newData, sections = null) => {
-    setData((prev) => {
-      // Save snapshot before overwriting
-      setPrevData(prev)
+    // Snapshot current data BEFORE updating — read from ref so we always get
+    // the latest value regardless of closure staleness.
+    const snapshot = dataRef.current
+    setPrevData(snapshot)
 
-      const existing = new Set(prev.providedSections || [])
-      if (sections) sections.forEach((s) => existing.add(s))
-      if (newData.providedSections) {
-        newData.providedSections.forEach((s) => existing.add(s))
-      }
+    const existing = new Set(snapshot.providedSections || [])
+    if (sections) sections.forEach((s) => existing.add(s))
+    if (newData.providedSections) {
+      newData.providedSections.forEach((s) => existing.add(s))
+    }
 
-      const merged  = { ...newData, providedSections: [...existing] }
-      const derived = deriveFromMarketSize(merged)
-      saveToStorage(derived)
-      return derived
-    })
+    const merged  = { ...newData, providedSections: [...existing] }
+    const derived = deriveFromMarketSize(merged)
+    saveToStorage(derived)
+    setData(derived)
+    setSaveCount((n) => n + 1)
   }, [])
 
   // undoData: revert to the snapshot saved before the last applyData call
@@ -256,5 +264,5 @@ export function useDashboardData() {
     localStorage.removeItem(STORAGE_KEY)
   }, [])
 
-  return { data, applyData, undoData, canUndo: prevData !== null, resetData }
+  return { data, applyData, undoData, canUndo: prevData !== null, resetData, saveCount }
 }

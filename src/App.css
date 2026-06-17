@@ -4311,8 +4311,7 @@ html, body, #root {
 .change-toast {
   position: fixed;
   bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 24px;
   z-index: 2000;
   min-width: 320px;
   max-width: 480px;
@@ -4325,8 +4324,8 @@ html, body, #root {
 }
 
 @keyframes toast-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(16px) scale(0.96); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1);    }
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
 }
 
 .change-toast-body {

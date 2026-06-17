@@ -214,7 +214,7 @@ const WidgetContent = memo(function WidgetContent({ id, data, summary, loading, 
 })
 
 function Dashboard() {
-  const { data, undoData, canUndo } = useData()
+  const { data, undoData, canUndo, saveCount } = useData()
   const [modalOpen,       setModalOpen]       = useState(false)
   const [editSection,     setEditSection]     = useState(null)
   const [keyModalOpen,    setKeyModalOpen]    = useState(false)
@@ -225,14 +225,11 @@ function Dashboard() {
   const [activeId,        setActiveId]        = useState(null)
   const [toast,           setToast]           = useState(null)  // { message }
 
-  // Show toast whenever data is applied (canUndo flips to true means a save just happened)
-  const prevCanUndo = useRef(false)
+  // Show toast on every save (saveCount increments each time applyData is called)
   useEffect(() => {
-    if (canUndo && !prevCanUndo.current) {
-      setToast({ message: 'Changes saved to dashboard' })
-    }
-    prevCanUndo.current = canUndo
-  }, [canUndo])
+    if (saveCount === 0) return
+    setToast({ message: 'Changes saved to dashboard' })
+  }, [saveCount])
 
   const {
     summary, loading, error, generate,

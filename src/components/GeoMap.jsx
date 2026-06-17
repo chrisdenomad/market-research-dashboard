@@ -75,7 +75,7 @@ export default function GeoMap({ regions, selectedRegions, onRegionClick, active
 
   // Load TopoJSON world map
   useEffect(() => {
-    fetch('/world-110m.json')
+    fetch(`${import.meta.env.BASE_URL}world-110m.json`)
       .then((r) => r.json())
       .then((topo) => {
         setWorldData(feature(topo, topo.objects.countries))
@@ -324,7 +324,7 @@ export default function GeoMap({ regions, selectedRegions, onRegionClick, active
 
           {/* Glow halos — only for visible regions with valid coordinates */}
           {visibleRegions.map((region) => {
-            if (!region.lat && !region.lng) return null   // skip stubs with no coords
+            if (region.lat == null || region.lng == null) return null   // skip stubs with no coords
             const pos = project(region.lng, region.lat)
             if (!pos) return null
             const isShown = selectedRegions.length === 0 || selectedRegions.includes(region.id)
@@ -339,7 +339,7 @@ export default function GeoMap({ regions, selectedRegions, onRegionClick, active
 
           {/* City bubbles */}
           {visibleRegions.map((region) => {
-            if (!region.lat && !region.lng) return null   // skip stubs with no coords
+            if (region.lat == null || region.lng == null) return null   // skip stubs with no coords
             const pos = project(region.lng, region.lat)
             if (!pos) return null
             const isShown  = selectedRegions.length === 0 || selectedRegions.includes(region.id)

@@ -64,7 +64,7 @@ export default function GeographicDistribution() {
 
   // Guard AFTER all hooks — never call hooks conditionally
   const provided = data.providedSections
-  if (!provided || !provided.includes('marketsize')) return null
+  if (!provided || !provided.includes('geo')) return null
 
   // ── Country filter ──────────────────────────────────────────
   function handleSetCountry(country) {
