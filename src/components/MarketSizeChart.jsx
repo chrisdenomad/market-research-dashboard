@@ -5,6 +5,12 @@ import {
 import { Pencil, Check, X } from 'lucide-react'
 import { useData } from '../context/DataContext'
 
+// Fallback bar colours when no colour is set on the column definition
+const BAR_COLORS = [
+  'var(--chart-1)', 'var(--chart-3)', 'var(--chart-2)',
+  'var(--chart-4)', 'var(--chart-5)',
+]
+
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
@@ -24,21 +30,9 @@ function InlineEdit({ value, onSave, placeholder, className, as: Tag = 'span' })
   const [editing, setEditing] = useState(false)
   const [draft,   setDraft]   = useState(value)
 
-  function startEdit() {
-    setDraft(value)
-    setEditing(true)
-  }
-
-  function commit() {
-    onSave(draft.trim() || value)
-    setEditing(false)
-  }
-
-  function cancel() {
-    setDraft(value)
-    setEditing(false)
-  }
-
+  function startEdit() { setDraft(value); setEditing(true) }
+  function commit()    { onSave(draft.trim() || value); setEditing(false) }
+  function cancel()    { setDraft(value); setEditing(false) }
   function handleKey(e) {
     if (e.key === 'Enter')  { e.preventDefault(); commit() }
     if (e.key === 'Escape') { cancel() }
@@ -71,30 +65,46 @@ function InlineEdit({ value, onSave, placeholder, className, as: Tag = 'span' })
   )
 }
 
+// ── Default columns used when no schema is saved ────────────────────────────
+const DEFAULT_COLUMNS = [
+  { key: 'city',      label: 'Location',              type: 'label'  },
+  { key: 'size',      label: 'Market Size',            type: 'number', color: 'var(--chart-1)' },
+  { key: 'available', label: 'Candidate Availability', type: 'number', color: 'var(--chart-3)' },
+]
+
 export default function MarketSizeChart() {
   const { data, applyData } = useData()
   const provided = data.providedSections
   if (!provided || !provided.includes('marketsize')) return null
 
   const marketSizeData = data.marketSizeData || []
+  const columns        = (data.marketSizeColumns && data.marketSizeColumns.length > 0)
+    ? data.marketSizeColumns
+    : DEFAULT_COLUMNS
   const disclaimers    = data.methodologyData?.disclaimers || []
   const titles         = data.widgetTitles || {}
 
   const title    = titles.marketSize         || 'Market Size by Location'
-  const subtitle = titles.marketSizeSubtitle || 'Total identified profiles vs. candidates open to opportunities'
-  const badge    = titles.marketSizeBadge    || 'LinkedIn Data'
+  const subtitle = titles.marketSizeSubtitle || ''
+  const badge    = titles.marketSizeBadge    || ''
 
-  // Use the disclaimer mentioning LinkedIn/profiles if present, else the first one
+  // Separate label column from numeric columns
+  const labelCol  = columns.find((c) => c.type === 'label') || columns[0]
+  const numCols   = columns.filter((c) => c.type === 'number')
+
+  // Totals row — only for numeric columns
+  const totals = {}
+  numCols.forEach((col) => {
+    totals[col.key] = marketSizeData.reduce((s, r) => s + (Number(r[col.key]) || 0), 0)
+  })
+
   const chartNote =
     disclaimers.find((d) => d.toLowerCase().includes('linkedin') || d.toLowerCase().includes('profiles')) ||
     disclaimers[0] ||
     null
 
   function saveTitle(key, val) {
-    applyData({
-      ...data,
-      widgetTitles: { ...titles, [key]: val },
-    })
+    applyData({ ...data, widgetTitles: { ...titles, [key]: val } })
   }
 
   return (
@@ -108,81 +118,119 @@ export default function MarketSizeChart() {
             className="card-title"
             as="h2"
           />
-          <InlineEdit
-            value={subtitle}
-            onSave={(v) => saveTitle('marketSizeSubtitle', v)}
-            placeholder="Subtitle"
-            className="card-subtitle"
-          />
-        </div>
-        <InlineEdit
-          value={badge}
-          onSave={(v) => saveTitle('marketSizeBadge', v)}
-          placeholder="Badge text"
-          className="card-badge"
-        />
-      </div>
-
-      <div className="chart-wrap" style={{ height: 280 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={marketSizeData} barGap={4} barCategoryGap="30%">
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-            <XAxis dataKey="city" tick={{ fill: 'var(--text-secondary)', fontSize: 13 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend
-              wrapperStyle={{ paddingTop: 12, fontSize: 13, color: 'var(--text-secondary)' }}
+          {subtitle && (
+            <InlineEdit
+              value={subtitle}
+              onSave={(v) => saveTitle('marketSizeSubtitle', v)}
+              placeholder="Subtitle"
+              className="card-subtitle"
             />
-            <Bar dataKey="size"      name="Market Size"           fill="var(--chart-1)" radius={[4,4,0,0]} />
-            <Bar dataKey="available" name="Candidate Availability" fill="var(--chart-3)" radius={[4,4,0,0]} />
-          </BarChart>
-        </ResponsiveContainer>
+          )}
+        </div>
+        {badge && (
+          <InlineEdit
+            value={badge}
+            onSave={(v) => saveTitle('marketSizeBadge', v)}
+            placeholder="Badge text"
+            className="card-badge"
+          />
+        )}
       </div>
 
+      {/* ── Bar chart ── */}
+      {numCols.length > 0 && marketSizeData.length > 0 && (
+        <div className="chart-wrap" style={{ height: 280 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={marketSizeData} barGap={4} barCategoryGap="30%">
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis
+                dataKey={labelCol.key}
+                tick={{ fill: 'var(--text-secondary)', fontSize: 13 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend wrapperStyle={{ paddingTop: 12, fontSize: 13, color: 'var(--text-secondary)' }} />
+              {numCols.map((col, idx) => (
+                <Bar
+                  key={col.key}
+                  dataKey={col.key}
+                  name={col.label}
+                  fill={col.color || BAR_COLORS[idx % BAR_COLORS.length]}
+                  radius={[4, 4, 0, 0]}
+                />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* ── Data table ── */}
       <div className="table-wrap">
         <table className="data-table">
           <thead>
             <tr>
-              <th>Location</th>
-              <th>Market Size</th>
-              <th>Candidate Availability</th>
-              <th>Availability Rate</th>
+              {/* Label column header */}
+              <th>{labelCol.label}</th>
+              {/* One header per numeric column */}
+              {numCols.map((col) => (
+                <th key={col.key}>{col.label}</th>
+              ))}
+              {/* Derived ratio column only when exactly two numeric cols exist */}
+              {numCols.length === 2 && (
+                <th>{numCols[1].label} Rate</th>
+              )}
             </tr>
           </thead>
           <tbody>
-            {marketSizeData.map((row) => (
-              <tr key={row.city}>
-                <td><strong>{row.city}</strong></td>
-                <td>{row.size}</td>
-                <td>{row.available}</td>
-                <td>
-                  <span className="badge badge-blue">
-                    {Math.round((row.available / row.size) * 100)}%
-                  </span>
-                </td>
+            {marketSizeData.map((row, i) => (
+              <tr key={i}>
+                <td><strong>{row[labelCol.key]}</strong></td>
+                {numCols.map((col) => (
+                  <td key={col.key}>{row[col.key]}</td>
+                ))}
+                {numCols.length === 2 && (() => {
+                  const a = Number(row[numCols[0].key]) || 0
+                  const b = Number(row[numCols[1].key]) || 0
+                  const pct = a ? Math.round((b / a) * 100) : 0
+                  return (
+                    <td key="rate">
+                      <span className="badge badge-blue">{pct}%</span>
+                    </td>
+                  )
+                })()}
               </tr>
             ))}
-            <tr className="table-total">
-              <td><strong>Total</strong></td>
-              <td><strong>{marketSizeData.reduce((s, r) => s + r.size, 0)}</strong></td>
-              <td><strong>{marketSizeData.reduce((s, r) => s + r.available, 0)}</strong></td>
-              <td>
-                <span className="badge badge-green">
-                  {Math.round(
-                    (marketSizeData.reduce((s, r) => s + r.available, 0) /
-                      marketSizeData.reduce((s, r) => s + r.size, 0)) * 100
-                  )}%
-                </span>
-              </td>
-            </tr>
+
+            {/* Totals row */}
+            {marketSizeData.length > 0 && (
+              <tr className="table-total">
+                <td><strong>Total</strong></td>
+                {numCols.map((col) => (
+                  <td key={col.key}><strong>{totals[col.key]}</strong></td>
+                ))}
+                {numCols.length === 2 && (() => {
+                  const totalA = totals[numCols[0].key] || 0
+                  const totalB = totals[numCols[1].key] || 0
+                  const pct    = totalA ? Math.round((totalB / totalA) * 100) : 0
+                  return (
+                    <td key="total-rate">
+                      <span className="badge badge-green">{pct}%</span>
+                    </td>
+                  )
+                })()}
+              </tr>
+            )}
           </tbody>
         </table>
-        <p className="table-note">
-          {chartNote
-            ? `* ${chartNote}`
-            : '* Research conducted on all visible LinkedIn profiles including local and non-local candidates. Candidate Availability refers to profiles identified as potentially open to opportunities.'
-          }
-        </p>
+        {chartNote && (
+          <p className="table-note">* {chartNote}</p>
+        )}
       </div>
     </div>
   )

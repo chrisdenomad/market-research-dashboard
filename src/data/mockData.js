@@ -63,11 +63,20 @@ export const kpiData = [
 ]
 
 // ─── MARKET SIZE BY LOCATION ────────────────────────────────────────────
-// Add or remove cities as needed. 'size' = total profiles, 'available' = open to opportunities
+// marketSizeColumns defines the table/chart schema. The first column (type:'label')
+// is the row identifier (X-axis). All 'number' columns become chart bars + table columns.
+// You can add, rename, reorder, or remove columns freely.
+export const marketSizeColumns = [
+  { key: 'city',      label: 'Location',             type: 'label'  },
+  { key: 'size',      label: 'Market Size',           type: 'number', color: 'var(--chart-1)' },
+  { key: 'available', label: 'Candidate Availability', type: 'number', color: 'var(--chart-3)' },
+]
+
+// Rows use the same keys as the columns above.
 export const marketSizeData = [
   { city: 'Singapore', size: 119, available: 62 },
   { city: 'Sydney',    size: 104, available: 40 },
-  { city: 'Hong Kong', size: 87,  available: 31 },  // ← placeholder — replace with real data
+  { city: 'Hong Kong', size: 87,  available: 31 },
 ]
 
 // ─── MARKET CAPACITY (Talent Funnel: TAM → SAM → SOM) ──────────────────

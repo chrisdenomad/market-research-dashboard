@@ -117,7 +117,7 @@ function AccordionSection({ id, label, desc, open, onToggle, children }) {
 // Map data keys → section ids so patch() can auto-mark sections as edited
 const KEY_TO_SECTION = {
   reportMeta: 'report', widgetTitles: 'report', kpiData: 'report',
-  marketSizeData: 'marketsize',
+  marketSizeColumns: 'marketsize', marketSizeData: 'marketsize',
   marketCapacityData: 'capacity',
   sourcingFunnelData: 'sourcing', sourcingStats: 'sourcing',
   keyInsightsData: 'insights',
@@ -466,40 +466,209 @@ function ReportSection({ formData, patch }) {
 }
 
 // ── 2. Market Size ────────────────────────────────────────────────────────────
+const DEFAULT_MS_COLUMNS = [
+  { key: 'city',      label: 'Location',              type: 'label'  },
+  { key: 'size',      label: 'Market Size',            type: 'number', color: 'var(--chart-1)' },
+  { key: 'available', label: 'Candidate Availability', type: 'number', color: 'var(--chart-3)' },
+]
+
+// Generate a unique key from a label string
+function labelToKey(label, existingKeys) {
+  const base = label.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'col'
+  if (!existingKeys.includes(base)) return base
+  let i = 2
+  while (existingKeys.includes(`${base}_${i}`)) i++
+  return `${base}_${i}`
+}
+
 function MarketSizeSection({ formData, patch }) {
+  const columns = (formData.marketSizeColumns && formData.marketSizeColumns.length > 0)
+    ? formData.marketSizeColumns
+    : DEFAULT_MS_COLUMNS
   const rows = formData.marketSizeData || []
 
-  function setRow(i, field, val) {
-    const next = rows.map((r, idx) =>
-      idx === i ? { ...r, [field]: field === 'city' ? val : Number(val) || 0 } : r
-    )
-    patch('marketSizeData', next)
+  const labelCol = columns.find((c) => c.type === 'label') || columns[0]
+  const numCols  = columns.filter((c) => c.type === 'number')
+
+  // ── Column mutations ────────────────────────────────────────────
+  function setColField(i, field, val) {
+    const next = columns.map((c, idx) => idx === i ? { ...c, [field]: val } : c)
+    patch('marketSizeColumns', next)
   }
+
+  function renameColKey(i, newLabel) {
+    // When a label column is renamed, update the key too so the data stays in sync
+    const col     = columns[i]
+    const oldKey  = col.key
+    const newKey  = labelToKey(newLabel, columns.filter((_, idx) => idx !== i).map((c) => c.key))
+    const nextCols = columns.map((c, idx) => idx === i ? { ...c, label: newLabel, key: newKey } : c)
+    // Re-key every row
+    const nextRows = rows.map((r) => {
+      const { [oldKey]: val, ...rest } = r
+      return { ...rest, [newKey]: val ?? (col.type === 'number' ? 0 : '') }
+    })
+    patch('marketSizeColumns', nextCols)
+    patch('marketSizeData', nextRows)
+  }
+
+  function addColumn(type) {
+    const label   = type === 'label' ? 'Label' : 'New Column'
+    const key     = labelToKey(label, columns.map((c) => c.key))
+    const nextCols = [...columns, { key, label, type, color: type === 'number' ? 'var(--chart-2)' : undefined }]
+    const nextRows = rows.map((r) => ({ ...r, [key]: type === 'number' ? 0 : '' }))
+    patch('marketSizeColumns', nextCols)
+    patch('marketSizeData', nextRows)
+  }
+
+  function removeColumn(i) {
+    const col     = columns[i]
+    const nextCols = columns.filter((_, idx) => idx !== i)
+    const nextRows = rows.map((r) => { const { [col.key]: _drop, ...rest } = r; return rest })
+    patch('marketSizeColumns', nextCols)
+    patch('marketSizeData', nextRows)
+  }
+
+  function moveColumn(i, dir) {
+    const j = i + dir
+    if (j < 0 || j >= columns.length) return
+    const next = [...columns]
+    ;[next[i], next[j]] = [next[j], next[i]]
+    patch('marketSizeColumns', next)
+  }
+
+  // ── Row mutations ───────────────────────────────────────────────
+  function setCell(rowIdx, key, val) {
+    const col  = columns.find((c) => c.key === key)
+    const cast = col?.type === 'number' ? (Number(val) || 0) : val
+    patch('marketSizeData', rows.map((r, i) => i === rowIdx ? { ...r, [key]: cast } : r))
+  }
+
+  function addRow() {
+    const blank = {}
+    columns.forEach((c) => { blank[c.key] = c.type === 'number' ? 0 : '' })
+    patch('marketSizeData', [...rows, blank])
+  }
+
+  function removeRow(i) {
+    patch('marketSizeData', rows.filter((_, idx) => idx !== i))
+  }
+
+  // Grid columns string for the row editor: label col wider, number cols equal, delete btn
+  const gridCols = [
+    '1.5fr',
+    ...numCols.map(() => '1fr'),
+    'auto',
+  ].join(' ')
 
   return (
     <div className="section-content">
-      <p className="section-hint">These cities power the bar chart. Editing them also syncs supply/available in the Geographic section.</p>
-      <div className="table-editor">
-        <div className="table-editor-head" style={{ gridTemplateColumns: '1.5fr 1fr 1fr auto' }}>
-          <span>City / Location</span><span>Market Size (profiles)</span><span>Candidate Availability</span><span></span>
-        </div>
-        {rows.map((r, i) => (
-          <div key={i} className="table-editor-row" style={{ gridTemplateColumns: '1.5fr 1fr 1fr auto' }}>
-            <input className="form-input" value={r.city} placeholder="e.g. Singapore"
-              onChange={(e) => setRow(i, 'city', e.target.value)} />
-            <input className="form-input" type="number" value={r.size}
-              onChange={(e) => setRow(i, 'size', e.target.value)} />
-            <input className="form-input" type="number" value={r.available}
-              onChange={(e) => setRow(i, 'available', e.target.value)} />
-            <button className="row-delete-btn" onClick={() => patch('marketSizeData', rows.filter((_, idx) => idx !== i))}>
-              <Trash2 size={14} />
+      <p className="section-hint">
+        Define your own columns, then fill in the rows. The chart and table update automatically.
+        The first <strong>label</strong> column is the X-axis. All <strong>number</strong> columns become bars.
+      </p>
+
+      {/* ── Column editor ── */}
+      <div className="sub-section">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <p className="sub-section-title" style={{ margin: 0 }}>Columns</p>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button className="add-row-btn" style={{ margin: 0 }} onClick={() => addColumn('number')}>
+              <Plus size={13} /> Add Number Column
             </button>
           </div>
-        ))}
+        </div>
+
+        <div className="ms-col-editor">
+          {columns.map((col, i) => (
+            <div key={col.key} className="ms-col-row">
+              {/* Move up/down */}
+              <div className="ms-col-arrows">
+                <button className="ms-arrow-btn" onClick={() => moveColumn(i, -1)} disabled={i === 0} title="Move left">▲</button>
+                <button className="ms-arrow-btn" onClick={() => moveColumn(i,  1)} disabled={i === columns.length - 1} title="Move right">▼</button>
+              </div>
+
+              {/* Type badge */}
+              <span className={`ms-col-type-badge ms-col-type-${col.type}`}>
+                {col.type === 'label' ? 'Label' : 'Number'}
+              </span>
+
+              {/* Column label (editable) */}
+              <div className="form-row" style={{ flex: 1, margin: 0 }}>
+                <input
+                  className="form-input"
+                  value={col.label}
+                  placeholder="Column heading"
+                  onChange={(e) => renameColKey(i, e.target.value)}
+                />
+              </div>
+
+              {/* Colour picker — only for number cols */}
+              {col.type === 'number' && (
+                <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexShrink: 0 }}>
+                  <input
+                    type="color"
+                    value={col.color?.startsWith('#') ? col.color : '#6366f1'}
+                    onChange={(e) => setColField(i, 'color', e.target.value)}
+                    style={{ width: 28, height: 28, padding: 2, borderRadius: 4, border: '1px solid var(--border)', cursor: 'pointer', background: 'none' }}
+                    title="Bar colour"
+                  />
+                </div>
+              )}
+
+              {/* Delete column — protect the label column if it's the only one */}
+              <button
+                className="row-delete-btn"
+                onClick={() => removeColumn(i)}
+                disabled={columns.length <= 1}
+                title="Remove column"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
-      <button className="add-row-btn" onClick={() => patch('marketSizeData', [...rows, { city: '', size: 0, available: 0 }])}>
-        <Plus size={14} /> Add City
-      </button>
+
+      {/* ── Row editor ── */}
+      <div className="sub-section">
+        <p className="sub-section-title">Data Rows</p>
+        {columns.length > 0 && (
+          <div className="table-editor">
+            {/* Header */}
+            <div className="table-editor-head" style={{ gridTemplateColumns: gridCols }}>
+              <span>{labelCol?.label || 'Label'}</span>
+              {numCols.map((col) => <span key={col.key}>{col.label}</span>)}
+              <span />
+            </div>
+            {/* Rows */}
+            {rows.map((row, ri) => (
+              <div key={ri} className="table-editor-row" style={{ gridTemplateColumns: gridCols }}>
+                <input
+                  className="form-input"
+                  value={row[labelCol?.key] ?? ''}
+                  placeholder={labelCol?.label || 'Label'}
+                  onChange={(e) => setCell(ri, labelCol.key, e.target.value)}
+                />
+                {numCols.map((col) => (
+                  <input
+                    key={col.key}
+                    className="form-input"
+                    type="number"
+                    value={row[col.key] ?? 0}
+                    onChange={(e) => setCell(ri, col.key, e.target.value)}
+                  />
+                ))}
+                <button className="row-delete-btn" onClick={() => removeRow(ri)} title="Remove row">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <button className="add-row-btn" onClick={addRow}>
+          <Plus size={14} /> Add Row
+        </button>
+      </div>
     </div>
   )
 }

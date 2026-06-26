@@ -51,13 +51,22 @@ function cityAbbr(city) {
 // ════════════════════════════════════════════════════════════════════════════
 function deriveFromMarketSize(data) {
   if (!data.marketSizeData) return data
-  const cities = data.marketSizeData
+  const cities  = data.marketSizeData
+  const columns = data.marketSizeColumns || []
 
-  const totalSize      = cities.reduce((s, r) => s + (r.size      || 0), 0)
-  const totalAvailable = cities.reduce((s, r) => s + (r.available || 0), 0)
+  // Find label column (type:'label') and the first two number columns — used for
+  // backward-compatible KPI/geo/capacity derivation (size = col1, available = col2).
+  const labelCol   = columns.find((c) => c.type === 'label')
+  const numCols    = columns.filter((c) => c.type === 'number')
+  const sizeKey    = numCols[0]?.key ?? 'size'
+  const availKey   = numCols[1]?.key ?? 'available'
+  const cityKey    = labelCol?.key    ?? 'city'
+
+  const totalSize      = cities.reduce((s, r) => s + (Number(r[sizeKey])  || 0), 0)
+  const totalAvailable = cities.reduce((s, r) => s + (Number(r[availKey]) || 0), 0)
   const availRate      = totalSize ? Math.round((totalAvailable / totalSize) * 100) : 0
   const cityCount      = cities.length
-  const cityAbbrList   = cities.map((r) => cityAbbr(r.city)).join(' · ')
+  const cityAbbrList   = cities.map((r) => cityAbbr(r[cityKey] || '')).join(' · ')
 
   const kpi = (data.kpiData || []).map((card, i) => {
     if (i === 0) return { ...card, value: String(totalSize),      change: `+${availRate}% availability rate` }
@@ -71,38 +80,41 @@ function deriveFromMarketSize(data) {
   const updatedRegions = [...existingRegions]
 
   cities.forEach((mktCity) => {
-    const nameLower = mktCity.city?.toLowerCase()
+    const cityName  = mktCity[cityKey] || ''
+    const nameLower = cityName.toLowerCase()
     const idx = updatedRegions.findIndex((r) => r.name?.toLowerCase() === nameLower)
+    const citySize  = Number(mktCity[sizeKey])  || 0
+    const cityAvail = Number(mktCity[availKey]) || 0
 
     if (idx >= 0) {
       updatedRegions[idx] = {
         ...updatedRegions[idx],
-        supply:    mktCity.size      ?? updatedRegions[idx].supply,
-        available: mktCity.available ?? updatedRegions[idx].available,
+        supply:    citySize  ?? updatedRegions[idx].supply,
+        available: cityAvail ?? updatedRegions[idx].available,
       }
     } else {
-      const baseId     = cityToId(mktCity.city)
+      const baseId     = cityToId(cityName)
       const newId      = uniqueId(baseId, usedIds)
       usedIds.push(newId)
       const colorIndex = updatedRegions.length % GEO_COLORS.length
       updatedRegions.push({
         id:          newId,
-        name:        mktCity.city,
-        country:     mktCity.city,
+        name:        cityName,
+        country:     cityName,
         countryCode: '',
         zone:        'Southeast Asia',
-        supply:      mktCity.size      || 0,
-        available:   mktCity.available || 0,
+        supply:      citySize,
+        available:   cityAvail,
         lat:         0,
         lng:         0,
         color:       GEO_COLORS[colorIndex],
         yoyChange:   0,
-        marketShare: totalSize ? Math.round((mktCity.size / totalSize) * 1000) / 10 : 0,
+        marketShare: totalSize ? Math.round((citySize / totalSize) * 1000) / 10 : 0,
       })
     }
   })
 
-  const marketCityNames = new Set(cities.map((c) => c.city?.toLowerCase()))
+  const marketCityNames = new Set(cities.map((c) => (c[cityKey] || '').toLowerCase()))
   const finalRegions = updatedRegions.filter((r) => {
     // Always keep manually-added regions (real coordinates or countryCode set)
     const isManual = (r.lat !== 0 || r.lng !== 0) || (r.countryCode && r.countryCode !== '')
@@ -170,6 +182,7 @@ function buildEmptyData() {
     reportMeta:          { title: '', role: '', date: '', preparedBy: '', company: '' },
     widgetTitles:        mockData.widgetTitles,
     kpiData:             mockData.kpiData,          // KPI cards always use structure from mockData
+    marketSizeColumns:   mockData.marketSizeColumns,
     marketSizeData:      [],
     marketCapacityData:  [],
     sourcingFunnelData:  [],
@@ -180,9 +193,6 @@ function buildEmptyData() {
     geoRegions:          [],
     geoTrendData:        [],
     countryBounds:       mockData.countryBounds,
-    // providedSections: which data sections the user has explicitly supplied.
-    // Widgets only render when their section is in this set.
-    // null = no data provided yet (fresh state).
     providedSections:    null,
   }
 }
@@ -193,6 +203,7 @@ function buildDefaultData() {
     reportMeta:          mockData.reportMeta,
     widgetTitles:        mockData.widgetTitles,
     kpiData:             mockData.kpiData,
+    marketSizeColumns:   mockData.marketSizeColumns,
     marketSizeData:      mockData.marketSizeData,
     marketCapacityData:  mockData.marketCapacityData,
     sourcingFunnelData:  mockData.sourcingFunnelData,
@@ -203,7 +214,6 @@ function buildDefaultData() {
     geoRegions:          mockData.geoRegions,
     geoTrendData:        mockData.geoTrendData,
     countryBounds:       mockData.countryBounds,
-    // All sections provided — show the full demo dashboard on first visit
     providedSections: ['report', 'marketsize', 'capacity', 'sourcing', 'insights', 'rates', 'geo', 'methodology'],
   }
 }
