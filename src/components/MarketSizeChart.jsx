@@ -178,10 +178,10 @@ const DEFAULT_COLUMNS = [
 
 function ChartBar({ data, labelKey, numCols }) {
   return (
-    <BarChart data={data} barGap={4} barCategoryGap="30%">
+    <BarChart data={data} barGap={4} barCategoryGap="30%" margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false}/>
       <XAxis dataKey={labelKey} tick={{ fill: 'var(--text-secondary)', fontSize: 13 }} axisLine={false} tickLine={false}/>
-      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false}/>
+      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} domain={[0, (dataMax) => Math.ceil(dataMax * 1.15)]}/>
       <Tooltip content={<CustomTooltip/>}/>
       <Legend wrapperStyle={{ paddingTop: 12, fontSize: 13, color: 'var(--text-secondary)' }}/>
       {numCols.map((col, idx) => (
@@ -196,10 +196,10 @@ function ChartBar({ data, labelKey, numCols }) {
 
 function ChartLine({ data, labelKey, numCols }) {
   return (
-    <LineChart data={data}>
+    <LineChart data={data} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false}/>
       <XAxis dataKey={labelKey} tick={{ fill: 'var(--text-secondary)', fontSize: 13 }} axisLine={false} tickLine={false}/>
-      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false}/>
+      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} domain={[0, (dataMax) => Math.ceil(dataMax * 1.15)]}/>
       <Tooltip content={<CustomTooltip/>}/>
       <Legend wrapperStyle={{ paddingTop: 12, fontSize: 13, color: 'var(--text-secondary)' }}/>
       {numCols.map((col, idx) => (
@@ -215,7 +215,7 @@ function ChartLine({ data, labelKey, numCols }) {
 
 function ChartArea({ data, labelKey, numCols }) {
   return (
-    <AreaChart data={data}>
+    <AreaChart data={data} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
       <defs>
         {numCols.map((col, idx) => {
           const color = col.color || BAR_COLORS[idx % BAR_COLORS.length]
@@ -229,7 +229,7 @@ function ChartArea({ data, labelKey, numCols }) {
       </defs>
       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false}/>
       <XAxis dataKey={labelKey} tick={{ fill: 'var(--text-secondary)', fontSize: 13 }} axisLine={false} tickLine={false}/>
-      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false}/>
+      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} domain={[0, (dataMax) => Math.ceil(dataMax * 1.15)]}/>
       <Tooltip content={<CustomTooltip/>}/>
       <Legend wrapperStyle={{ paddingTop: 12, fontSize: 13, color: 'var(--text-secondary)' }}/>
       {numCols.map((col, idx) => {
