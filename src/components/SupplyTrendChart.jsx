@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer,
+  Tooltip, Legend, ResponsiveContainer, LabelList,
 } from 'recharts'
 
 const CustomTooltip = ({ active, payload, label, regions }) => {
@@ -27,6 +27,18 @@ export default function SupplyTrendChart({ trendData, regions, selectedRegions }
   const visibleRegions = selectedRegions.length > 0
     ? regions.filter((r) => selectedRegions.includes(r.id))
     : regions
+
+  // Only render a label on the last data point to avoid clutter
+  const lastIndex = trendData.length - 1
+  function renderLastLabel(props) {
+    const { x, y, index, value } = props
+    if (index !== lastIndex || value === undefined || value === null) return null
+    return (
+      <text x={x + 4} y={y - 6} fontSize={10} fontWeight={600} fill="var(--text-secondary)" textAnchor="start">
+        {value}
+      </text>
+    )
+  }
 
   function toggleLine(regionId) {
     setHiddenLines((prev) =>
@@ -100,7 +112,9 @@ export default function SupplyTrendChart({ trendData, regions, selectedRegions }
                   strokeWidth={2}
                   dot={false}
                   activeDot={{ r: 5, strokeWidth: 0 }}
-                />
+                >
+                  <LabelList dataKey={region.id} content={renderLastLabel} />
+                </Line>
               )
             )}
           </LineChart>

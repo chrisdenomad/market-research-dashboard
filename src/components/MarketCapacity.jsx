@@ -47,7 +47,7 @@ export default function MarketCapacity() {
                 dataKey="value"
                 cornerRadius={6}
                 background={{ fill: 'var(--border)' }}
-                label={false}
+                label={{ position: 'insideStart', fill: '#fff', fontSize: 11, fontWeight: 700, formatter: (val) => val.toLocaleString() }}
               />
               <Tooltip content={<CustomTooltip />} />
             </RadialBarChart>

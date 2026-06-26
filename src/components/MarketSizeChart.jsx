@@ -6,7 +6,7 @@ import {
   PieChart, Pie, Cell,
   ScatterChart, Scatter, ZAxis,
   XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer,
+  Tooltip, Legend, ResponsiveContainer, LabelList,
 } from 'recharts'
 import { Pencil, Check, X } from 'lucide-react'
 import { useData } from '../context/DataContext'
@@ -186,7 +186,9 @@ function ChartBar({ data, labelKey, numCols }) {
       <Legend wrapperStyle={{ paddingTop: 12, fontSize: 13, color: 'var(--text-secondary)' }}/>
       {numCols.map((col, idx) => (
         <Bar key={col.key} dataKey={col.key} name={col.label}
-          fill={col.color || BAR_COLORS[idx % BAR_COLORS.length]} radius={[4,4,0,0]}/>
+          fill={col.color || BAR_COLORS[idx % BAR_COLORS.length]} radius={[4,4,0,0]}>
+          <LabelList dataKey={col.key} position="top" style={{ fontSize: 11, fill: 'var(--text-secondary)', fontWeight: 600 }}/>
+        </Bar>
       ))}
     </BarChart>
   )
@@ -203,7 +205,9 @@ function ChartLine({ data, labelKey, numCols }) {
       {numCols.map((col, idx) => (
         <Line key={col.key} type="monotone" dataKey={col.key} name={col.label}
           stroke={col.color || BAR_COLORS[idx % BAR_COLORS.length]}
-          strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }}/>
+          strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }}>
+          <LabelList dataKey={col.key} position="top" style={{ fontSize: 11, fill: 'var(--text-secondary)', fontWeight: 600 }}/>
+        </Line>
       ))}
     </LineChart>
   )
@@ -233,7 +237,9 @@ function ChartArea({ data, labelKey, numCols }) {
         return (
           <Area key={col.key} type="monotone" dataKey={col.key} name={col.label}
             stroke={color} strokeWidth={2}
-            fill={`url(#area-grad-${col.key})`}/>
+            fill={`url(#area-grad-${col.key})`}>
+            <LabelList dataKey={col.key} position="top" style={{ fontSize: 11, fill: 'var(--text-secondary)', fontWeight: 600 }}/>
+          </Area>
         )
       })}
     </AreaChart>
@@ -328,7 +334,9 @@ function ChartScatter({ data, labelKey, numCols }) {
         data={scatterData}
         fill={resolveColor(xCol.color || 'var(--chart-1)', 0)}
         fillOpacity={0.8}
-      />
+      >
+        <LabelList dataKey="label" position="top" style={{ fontSize: 11, fill: 'var(--text-secondary)', fontWeight: 600 }}/>
+      </Scatter>
     </ScatterChart>
   )
 }
