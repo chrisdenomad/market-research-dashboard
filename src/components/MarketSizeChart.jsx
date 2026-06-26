@@ -34,6 +34,91 @@ function resolveColor(cssVar, idx) {
   }
 }
 
+// ── Theme-aware data label badge ─────────────────────────────────────────────
+// Renders a small pill above/beside a data point. Uses the series colour for
+// the badge background and picks white or dark text for contrast automatically.
+// Falls back gracefully when called outside a DOM environment.
+function hexToRgb(hex) {
+  const clean = hex.replace('#', '')
+  const full  = clean.length === 3
+    ? clean.split('').map((c) => c + c).join('')
+    : clean
+  const n = parseInt(full, 16)
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }
+}
+
+function luminance({ r, g, b }) {
+  const chan = [r, g, b].map((c) => {
+    const s = c / 255
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+  })
+  return 0.2126 * chan[0] + 0.7152 * chan[1] + 0.0722 * chan[2]
+}
+
+function contrastColor(hex) {
+  try {
+    const rgb  = hexToRgb(hex)
+    const lum  = luminance(rgb)
+    return lum > 0.35 ? '#111827' : '#ffffff'
+  } catch {
+    return '#ffffff'
+  }
+}
+
+// Add alpha to a hex colour (returns rgba string)
+function hexAlpha(hex, alpha) {
+  try {
+    const { r, g, b } = hexToRgb(hex)
+    return `rgba(${r},${g},${b},${alpha})`
+  } catch {
+    return hex
+  }
+}
+
+// Custom LabelList content — a small rounded badge coloured per series
+function DataLabel({ x, y, width = 0, value, color, position = 'top' }) {
+  if (value === undefined || value === null || value === '') return null
+
+  const resolvedColor = resolveColor(color, 0)
+  const bgColor       = hexAlpha(resolvedColor, 0.18)
+  const borderColor   = hexAlpha(resolvedColor, 0.55)
+
+  const text    = typeof value === 'number' ? value.toLocaleString() : String(value)
+  const charW   = 7.5
+  const padX    = 6
+  const rectH   = 16
+  const rectW   = Math.max(text.length * charW + padX * 2, 24)
+
+  // Centre the badge above the bar midpoint
+  const cx = x + (width / 2)
+  const rx = cx - rectW / 2
+  const ry = position === 'top' ? y - rectH - 4 : y + 4
+
+  return (
+    <g>
+      <rect
+        x={rx} y={ry}
+        width={rectW} height={rectH}
+        rx={4} ry={4}
+        fill={bgColor}
+        stroke={borderColor}
+        strokeWidth={1}
+      />
+      <text
+        x={cx} y={ry + rectH / 2 + 1}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={10}
+        fontWeight={700}
+        fill={resolvedColor}
+        fontFamily="inherit"
+      >
+        {text}
+      </text>
+    </g>
+  )
+}
+
 // ── Chart type definitions ──────────────────────────────────────────────────
 const CHART_TYPES = [
   {
@@ -184,12 +269,15 @@ function ChartBar({ data, labelKey, numCols }) {
       <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} domain={[0, (dataMax) => Math.ceil(dataMax * 1.15)]}/>
       <Tooltip content={<CustomTooltip/>}/>
       <Legend wrapperStyle={{ paddingTop: 12, fontSize: 13, color: 'var(--text-secondary)' }}/>
-      {numCols.map((col, idx) => (
-        <Bar key={col.key} dataKey={col.key} name={col.label}
-          fill={col.color || BAR_COLORS[idx % BAR_COLORS.length]} radius={[4,4,0,0]}>
-          <LabelList dataKey={col.key} position="top" style={{ fontSize: 11, fill: 'var(--text-secondary)', fontWeight: 600 }}/>
-        </Bar>
-      ))}
+      {numCols.map((col, idx) => {
+        const color = col.color || BAR_COLORS[idx % BAR_COLORS.length]
+        return (
+          <Bar key={col.key} dataKey={col.key} name={col.label}
+            fill={color} radius={[4,4,0,0]}>
+            <LabelList dataKey={col.key} position="top" content={(props) => <DataLabel {...props} color={color}/>}/>
+          </Bar>
+        )
+      })}
     </BarChart>
   )
 }
@@ -202,13 +290,16 @@ function ChartLine({ data, labelKey, numCols }) {
       <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} domain={[0, (dataMax) => Math.ceil(dataMax * 1.15)]}/>
       <Tooltip content={<CustomTooltip/>}/>
       <Legend wrapperStyle={{ paddingTop: 12, fontSize: 13, color: 'var(--text-secondary)' }}/>
-      {numCols.map((col, idx) => (
-        <Line key={col.key} type="monotone" dataKey={col.key} name={col.label}
-          stroke={col.color || BAR_COLORS[idx % BAR_COLORS.length]}
-          strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }}>
-          <LabelList dataKey={col.key} position="top" style={{ fontSize: 11, fill: 'var(--text-secondary)', fontWeight: 600 }}/>
-        </Line>
-      ))}
+      {numCols.map((col, idx) => {
+        const color = col.color || BAR_COLORS[idx % BAR_COLORS.length]
+        return (
+          <Line key={col.key} type="monotone" dataKey={col.key} name={col.label}
+            stroke={color}
+            strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }}>
+            <LabelList dataKey={col.key} position="top" content={(props) => <DataLabel {...props} color={color}/>}/>
+          </Line>
+        )
+      })}
     </LineChart>
   )
 }
@@ -238,7 +329,7 @@ function ChartArea({ data, labelKey, numCols }) {
           <Area key={col.key} type="monotone" dataKey={col.key} name={col.label}
             stroke={color} strokeWidth={2}
             fill={`url(#area-grad-${col.key})`}>
-            <LabelList dataKey={col.key} position="top" style={{ fontSize: 11, fill: 'var(--text-secondary)', fontWeight: 600 }}/>
+            <LabelList dataKey={col.key} position="top" content={(props) => <DataLabel {...props} color={color}/>}/>
           </Area>
         )
       })}
@@ -335,7 +426,7 @@ function ChartScatter({ data, labelKey, numCols }) {
         fill={resolveColor(xCol.color || 'var(--chart-1)', 0)}
         fillOpacity={0.8}
       >
-        <LabelList dataKey="label" position="top" style={{ fontSize: 11, fill: 'var(--text-secondary)', fontWeight: 600 }}/>
+        <LabelList dataKey="label" position="top" content={(props) => <DataLabel {...props} color={xCol.color || 'var(--chart-1)'}/>}/>
       </Scatter>
     </ScatterChart>
   )
