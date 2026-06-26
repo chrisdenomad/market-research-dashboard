@@ -9,6 +9,7 @@ export const widgetTitles = {
   marketSize:             'Market Size by Location',
   marketSizeSubtitle:     'Total identified profiles vs. candidates open to opportunities',
   marketSizeBadge:        'LinkedIn Data',
+  marketSizeChartType:    'bar',           // bar | line | area | pie | scatter
   marketCapacity:         'Market Capacity',
   geoDistribution:        'Geographic Distribution',
   sourcing:               'Sourcing Outlook',
