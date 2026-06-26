@@ -1160,87 +1160,70 @@ html, body, #root {
   color: var(--text-muted);
 }
 
-.settings-theme-list {
-  padding: 0 8px 6px;
+/* Compact swatch grid */
+.settings-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 0 10px 6px;
+}
+
+.settings-theme-cell {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-}
-
-.settings-theme-row {
-  display: flex;
   align-items: center;
-  gap: 4px;
-  border-radius: 6px;
-  overflow: hidden;
+  gap: 3px;
 }
 
-.settings-theme-row.active {
-  background: var(--accent-bg);
-}
-
-.settings-theme-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-  text-align: left;
-  transition: background 0.12s;
-}
-
-.settings-theme-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.settings-theme-row.active .settings-theme-btn {
-  color: var(--accent-light);
-  font-weight: 600;
-}
-
-.settings-theme-swatch {
-  width: 12px;
-  height: 12px;
+.settings-theme-swatch-btn {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: border-color 0.15s, transform 0.12s;
   flex-shrink: 0;
 }
 
-.settings-theme-name {
-  flex: 1;
+.settings-theme-swatch-btn:hover {
+  transform: scale(1.15);
+  border-color: var(--text-muted);
 }
 
-.settings-theme-check {
-  color: var(--accent-light);
-  flex-shrink: 0;
+.settings-theme-swatch-btn.active {
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent);
 }
 
-.settings-default-btn {
-  padding: 5px 6px;
+.settings-theme-cell-name {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.settings-default-dot {
+  padding: 0;
   background: transparent;
   border: none;
   cursor: pointer;
   color: var(--text-muted);
-  border-radius: 4px;
   display: flex;
   align-items: center;
-  transition: color 0.12s, background 0.12s;
-  flex-shrink: 0;
+  justify-content: center;
+  transition: color 0.12s;
 }
 
-.settings-default-btn:hover {
+.settings-default-dot:hover {
   color: #f59e0b;
-  background: rgba(245,158,11,0.12);
 }
 
-.settings-default-btn.pinned {
+.settings-default-dot.pinned {
   color: #f59e0b;
 }
 

@@ -96,41 +96,35 @@ function SettingsPanel({ onOpenKeyModal, onManageWidgets, onOpenThemeBuilder, on
       {/* Theme picker */}
       <div className="settings-divider" />
       <p className="settings-section-label">Theme</p>
-      <div className="settings-theme-list">
+      <div className="settings-theme-grid">
         {themes.map((t) => {
-          const isActive   = theme.id === t.id
-          const isDefault  = defaultThemeId === t.id
+          const isActive  = theme.id === t.id
+          const isDefault = defaultThemeId === t.id
+          const color     = SWATCHES[t.id] ?? t.vars?.['--accent'] ?? '#6366f1'
           return (
-            <div
-              key={t.id}
-              className={`settings-theme-row ${isActive ? 'active' : ''}`}
-            >
+            <div key={t.id} className="settings-theme-cell" title={t.name}>
               <button
-                className="settings-theme-btn"
+                className={`settings-theme-swatch-btn ${isActive ? 'active' : ''}`}
+                style={{ background: color }}
                 onClick={() => setTheme(t)}
-                title={`Switch to ${t.name}`}
               >
-                <span
-                  className="settings-theme-swatch"
-                  style={{ background: SWATCHES[t.id] ?? t.vars?.['--accent'] ?? '#6366f1' }}
-                />
-                <span className="settings-theme-name">{t.name}</span>
-                {isActive && <Check size={12} className="settings-theme-check" />}
+                {isActive && <Check size={10} />}
               </button>
               <button
-                className={`settings-default-btn ${isDefault ? 'pinned' : ''}`}
+                className={`settings-default-dot ${isDefault ? 'pinned' : ''}`}
                 onClick={() => setDefaultTheme(t)}
                 title={isDefault ? 'Default theme' : 'Set as default'}
               >
-                <Star size={12} />
+                <Star size={9} />
               </button>
+              <span className="settings-theme-cell-name">{t.name}</span>
             </div>
           )
         })}
       </div>
       <p className="settings-hint">
         <Star size={10} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
-        Starred theme loads on every page refresh.
+        Starred theme loads on every refresh.
       </p>
     </div>
   )
