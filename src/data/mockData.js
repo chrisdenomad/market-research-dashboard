@@ -5,14 +5,16 @@
 
 // ─── WIDGET TITLES ─────────────────────────────────────────────────────
 export const widgetTitles = {
-  aiOverview:           'AI Market Overview',
-  marketSize:           'Market Size by Location',
-  marketCapacity:       'Market Capacity',
-  geoDistribution:      'Geographic Distribution',
-  sourcing:             'Sourcing Outlook',
-  keyInsights:          'Key Insights',
-  benchmark:            'Market Rate Benchmark',
-  methodology:          'Search Methodology',
+  aiOverview:             'AI Market Overview',
+  marketSize:             'Market Size by Location',
+  marketSizeSubtitle:     'Total identified profiles vs. candidates open to opportunities',
+  marketSizeBadge:        'LinkedIn Data',
+  marketCapacity:         'Market Capacity',
+  geoDistribution:        'Geographic Distribution',
+  sourcing:               'Sourcing Outlook',
+  keyInsights:            'Key Insights',
+  benchmark:              'Market Rate Benchmark',
+  methodology:            'Search Methodology',
 }
 
 // ─── REPORT METADATA ───────────────────────────────────────────────────

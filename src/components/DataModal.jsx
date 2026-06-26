@@ -353,14 +353,16 @@ function ReportSection({ formData, patch }) {
   }
 
   const TITLE_FIELDS = [
-    { key: 'aiOverview',      label: 'AI Overview'            },
-    { key: 'marketSize',      label: 'Market Size'            },
-    { key: 'marketCapacity',  label: 'Market Capacity'        },
-    { key: 'geoDistribution', label: 'Geographic Distribution'},
-    { key: 'sourcing',        label: 'Sourcing Outlook'       },
-    { key: 'keyInsights',     label: 'Key Insights'           },
-    { key: 'benchmark',       label: 'Rate Benchmark'         },
-    { key: 'methodology',     label: 'Methodology'            },
+    { key: 'aiOverview',            label: 'AI Overview'                    },
+    { key: 'marketSize',            label: 'Market Size — Title'            },
+    { key: 'marketSizeSubtitle',    label: 'Market Size — Subtitle'         },
+    { key: 'marketSizeBadge',       label: 'Market Size — Badge'            },
+    { key: 'marketCapacity',        label: 'Market Capacity'                },
+    { key: 'geoDistribution',       label: 'Geographic Distribution'        },
+    { key: 'sourcing',              label: 'Sourcing Outlook'               },
+    { key: 'keyInsights',           label: 'Key Insights'                   },
+    { key: 'benchmark',             label: 'Rate Benchmark'                 },
+    { key: 'methodology',           label: 'Methodology'                    },
   ]
 
   return (
@@ -400,11 +402,29 @@ function ReportSection({ formData, patch }) {
       </div>
 
       <div className="sub-section">
-        <p className="sub-section-title">Metric Cards</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <p className="sub-section-title" style={{ margin: 0 }}>Metric Cards</p>
+          <button
+            className="add-row-btn"
+            style={{ margin: 0 }}
+            onClick={() => patch('kpiData', [...kpis, { label: 'New Metric', value: '0', unit: '', change: '', trend: 'neutral', icon: 'users' }])}
+          >
+            <Plus size={14} /> Add Card
+          </button>
+        </div>
         <div className="form-grid-2">
           {kpis.map((k, i) => (
             <div key={i} className="form-card">
-              <div className="form-card-title">Metric {i + 1}</div>
+              <div className="form-card-header">
+                <div className="form-card-title">Metric {i + 1}</div>
+                <button
+                  className="row-delete-btn"
+                  title="Remove this metric card"
+                  onClick={() => patch('kpiData', kpis.filter((_, idx) => idx !== i))}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
               <div className="form-row">
                 <label className="form-label">Label</label>
                 <input className="form-input" value={k.label || ''} onChange={(e) => setKpi(i, 'label', e.target.value)} />

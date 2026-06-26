@@ -160,7 +160,7 @@ function ChangeToast({ message, onUndo, onDismiss }) {
 }
 
 // ── Widget content renderer ─────────────────────────────────────
-const WidgetContent = memo(function WidgetContent({ id, data, summary, loading, error, generate, hasKey, customInstruction, updateInstruction, mode, setMode, manualOutput, manualLoading, manualError, generateManual, onOpenKeyModal }) {
+const WidgetContent = memo(function WidgetContent({ id, data, summary, loading, error, generate, hasKey, customInstruction, updateInstruction, mode, setMode, manualOutput, manualLoading, manualError, generateManual, visibleSections, onOpenKeyModal }) {
   const sectionId = SECTION_IDS[id]
   const provided  = data.providedSections
 
@@ -182,6 +182,7 @@ const WidgetContent = memo(function WidgetContent({ id, data, summary, loading, 
             manualLoading={manualLoading}
             manualError={manualError}
             onManualGenerate={generateManual}
+            visibleSections={visibleSections}
           />
         </section>
       )
@@ -231,16 +232,17 @@ function Dashboard() {
     setToast({ message: 'Changes saved to dashboard' })
   }, [saveCount])
 
+  // Widgets that are currently visible (order preserved, hidden ones excluded)
+  const visibleWidgets = widgetOrder.filter((id) => !hiddenWidgets.includes(id))
+
   const {
     summary, loading, error, generate,
     apiKey, updateApiKey, hasKey,
     customInstruction, updateInstruction,
     mode, setMode,
     manualOutput, manualLoading, manualError, generateManual,
-  } = useAIInsight(data)
-
-  // Widgets that are currently visible (order preserved, hidden ones excluded)
-  const visibleWidgets = widgetOrder.filter((id) => !hiddenWidgets.includes(id))
+    visibleSections,
+  } = useAIInsight(data, visibleWidgets)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -296,6 +298,7 @@ function Dashboard() {
     customInstruction, updateInstruction,
     mode, setMode,
     manualOutput, manualLoading, manualError, generateManual,
+    visibleSections,
     onOpenKeyModal: () => setKeyModalOpen(true),
   }
 

@@ -27,6 +27,29 @@ const SUMMARY_PLACEHOLDER =
   'Leave blank for the default executive overview, or add context like:\n' +
   '"Focus on offshore risks for a Series A startup with a tight budget."'
 
+// ── Section key → human label for the subtitle tag list ─────────────────────
+const SECTION_LABELS = {
+  report:      'Metrics',
+  marketsize:  'Market Size',
+  capacity:    'Talent Funnel',
+  sourcing:    'Sourcing',
+  rates:       'Salary',
+  insights:    'Insights',
+  geo:         'Geography',
+}
+
+function buildSubtitle(visibleSections) {
+  if (!visibleSections || visibleSections.size === 0) {
+    return 'No data sections active'
+  }
+  const labels = Object.entries(SECTION_LABELS)
+    .filter(([key]) => visibleSections.has(key))
+    .map(([, label]) => label)
+  if (labels.length === 0) return 'No data sections active'
+  const count = labels.length
+  return `${count} section${count !== 1 ? 's' : ''} · ${labels.join(' · ')}`
+}
+
 export default function AIInsightCard({
   // Mode 2 — summary
   summary, loading, error, onRegenerate, onGenerate,
@@ -35,6 +58,8 @@ export default function AIInsightCard({
   manualOutput, manualLoading, manualError, onManualGenerate,
   // Shared
   onOpenKeyModal, mode, onModeChange, hasKey,
+  // Active sections (from useAIInsight)
+  visibleSections,
 }) {
   const { data } = useData()
   const titles = data.widgetTitles || {}
@@ -86,7 +111,7 @@ export default function AIInsightCard({
           <span className="ai-spark-icon"><Sparkles size={16} /></span>
           <div>
             <h2 className="card-title">{titles.aiOverview || 'AI Market Overview'}</h2>
-            <p className="card-subtitle">7 key insights · market supply & hiring prediction</p>
+            <p className="card-subtitle">{buildSubtitle(visibleSections)}</p>
           </div>
         </div>
         <div className="ai-card-actions no-pdf">

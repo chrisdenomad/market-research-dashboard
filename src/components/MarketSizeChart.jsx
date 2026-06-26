@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
+import { Pencil, Check, X } from 'lucide-react'
 import { useData } from '../context/DataContext'
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -17,13 +19,70 @@ const CustomTooltip = ({ active, payload, label }) => {
   )
 }
 
+// ── Inline editable text field ──────────────────────────────────────────────
+function InlineEdit({ value, onSave, placeholder, className, as: Tag = 'span' }) {
+  const [editing, setEditing] = useState(false)
+  const [draft,   setDraft]   = useState(value)
+
+  function startEdit() {
+    setDraft(value)
+    setEditing(true)
+  }
+
+  function commit() {
+    onSave(draft.trim() || value)
+    setEditing(false)
+  }
+
+  function cancel() {
+    setDraft(value)
+    setEditing(false)
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter')  { e.preventDefault(); commit() }
+    if (e.key === 'Escape') { cancel() }
+  }
+
+  if (editing) {
+    return (
+      <span className="inline-edit-active">
+        <input
+          className={`inline-edit-input ${className || ''}`}
+          value={draft}
+          autoFocus
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKey}
+          placeholder={placeholder}
+        />
+        <button className="inline-edit-btn inline-edit-confirm" onClick={commit}  title="Save (Enter)"><Check size={12} /></button>
+        <button className="inline-edit-btn inline-edit-cancel"  onClick={cancel}  title="Cancel (Esc)"><X    size={12} /></button>
+      </span>
+    )
+  }
+
+  return (
+    <span className="inline-edit-static">
+      <Tag className={className}>{value}</Tag>
+      <button className="inline-edit-trigger" onClick={startEdit} title="Edit">
+        <Pencil size={11} />
+      </button>
+    </span>
+  )
+}
+
 export default function MarketSizeChart() {
-  const { data } = useData()
+  const { data, applyData } = useData()
   const provided = data.providedSections
   if (!provided || !provided.includes('marketsize')) return null
+
   const marketSizeData = data.marketSizeData || []
   const disclaimers    = data.methodologyData?.disclaimers || []
   const titles         = data.widgetTitles || {}
+
+  const title    = titles.marketSize         || 'Market Size by Location'
+  const subtitle = titles.marketSizeSubtitle || 'Total identified profiles vs. candidates open to opportunities'
+  const badge    = titles.marketSizeBadge    || 'LinkedIn Data'
 
   // Use the disclaimer mentioning LinkedIn/profiles if present, else the first one
   const chartNote =
@@ -31,14 +90,37 @@ export default function MarketSizeChart() {
     disclaimers[0] ||
     null
 
+  function saveTitle(key, val) {
+    applyData({
+      ...data,
+      widgetTitles: { ...titles, [key]: val },
+    })
+  }
+
   return (
     <div className="card" id="market-size">
       <div className="card-header">
-        <div>
-          <h2 className="card-title">{titles.marketSize || 'Market Size by Location'}</h2>
-          <p className="card-subtitle">Total identified profiles vs. candidates open to opportunities</p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <InlineEdit
+            value={title}
+            onSave={(v) => saveTitle('marketSize', v)}
+            placeholder="Card title"
+            className="card-title"
+            as="h2"
+          />
+          <InlineEdit
+            value={subtitle}
+            onSave={(v) => saveTitle('marketSizeSubtitle', v)}
+            placeholder="Subtitle"
+            className="card-subtitle"
+          />
         </div>
-        <span className="card-badge">LinkedIn Data</span>
+        <InlineEdit
+          value={badge}
+          onSave={(v) => saveTitle('marketSizeBadge', v)}
+          placeholder="Badge text"
+          className="card-badge"
+        />
       </div>
 
       <div className="chart-wrap" style={{ height: 280 }}>
