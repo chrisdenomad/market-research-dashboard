@@ -275,7 +275,7 @@ export default function DataModal({ onClose, initialSection }) {
 
             {/* ── 2. Market Size ── */}
             <AccordionSection {...SECTIONS[1]} open={!!openSections.marketsize} onToggle={toggleSection}>
-              <MarketSizeSection formData={formData} patch={patch} />
+              <MarketSizeSection formData={formData} patch={patch} patchBatch={patchBatch} />
             </AccordionSection>
 
             {/* ── 3. Capacity Funnel ── */}
@@ -481,7 +481,7 @@ function labelToKey(label, existingKeys) {
   return `${base}_${i}`
 }
 
-function MarketSizeSection({ formData, patch }) {
+function MarketSizeSection({ formData, patch, patchBatch }) {
   const columns = (formData.marketSizeColumns && formData.marketSizeColumns.length > 0)
     ? formData.marketSizeColumns
     : DEFAULT_MS_COLUMNS
@@ -507,8 +507,9 @@ function MarketSizeSection({ formData, patch }) {
       const { [oldKey]: val, ...rest } = r
       return { ...rest, [newKey]: val ?? (col.type === 'number' ? 0 : '') }
     })
-    patch('marketSizeColumns', nextCols)
-    patch('marketSizeData', nextRows)
+    // Use patchBatch to apply both updates atomically — avoids stale-closure
+    // overwrite that would occur when calling patch() twice in succession.
+    patchBatch({ marketSizeColumns: nextCols, marketSizeData: nextRows })
   }
 
   function addColumn(type) {
@@ -580,7 +581,7 @@ function MarketSizeSection({ formData, patch }) {
 
         <div className="ms-col-editor">
           {columns.map((col, i) => (
-            <div key={col.key} className="ms-col-row">
+            <div key={i} className="ms-col-row">
               {/* Move up/down */}
               <div className="ms-col-arrows">
                 <button className="ms-arrow-btn" onClick={() => moveColumn(i, -1)} disabled={i === 0} title="Move left">▲</button>
